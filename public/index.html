@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>敲木鱼</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+    background: #111;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Subtle floating particles background */
+  .bg-particles {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .bg-particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: rgba(255,200,120,0.08);
+    border-radius: 50%;
+    animation: float-up linear infinite;
+  }
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+  }
+
+  .container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    color: #e8d5b7;
+    letter-spacing: 0.15em;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 400;
+    text-shadow: 0 0 20px rgba(200,160,100,0.3);
+  }
+  .header .subtitle {
+    font-size: 13px;
+    color: #5a5a5a;
+    margin-top: 4px;
+  }
+
+  /* Fish wrapper */
+  .muyu-wrapper {
+    position: relative;
+    cursor: pointer;
+    width: 280px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .muyu-wrapper:active .muyu-body-group {
+    transform: scale(0.97);
+  }
+
+  .muyu-body-group {
+    transition: transform 0.06s ease;
+  }
+
+  /* Hit shake animation */
+  .muyu-wrapper.hit .muyu-body-group {
+    animation: hit-shake 0.3s ease-out;
+  }
+  @keyframes hit-shake {
+    0% { transform: translateX(0) rotate(0deg); }
+    15% { transform: translateX(-3px) rotate(-1deg); }
+    30% { transform: translateX(3px) rotate(1deg); }
+    45% { transform: translateX(-2px) rotate(-0.5deg); }
+    60% { transform: translateX(2px) rotate(0.5deg); }
+    80% { transform: translateX(-1px) rotate(-0.2deg); }
+    100% { transform: translateX(0) rotate(0deg); }
+  }
+
+  /* Mallet animation */
+  .mallet-group {
+    transition: transform 0.05s ease;
+    transform-origin: 160px 60px;
+  }
+  .muyu-wrapper.hit .mallet-group {
+    animation: mallet-strike 0.3s ease-out;
+  }
+  @keyframes mallet-strike {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(25deg); }
+    50% { transform: rotate(-15deg); }
+    70% { transform: rotate(5deg); }
+    85% { transform: rotate(-2deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* Ripple effect */
+  .ripple-container {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .ripple {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255,200,140,0.6);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+  .muyu-wrapper.hit .ripple {
+    animation: ripple-expand 0.6s ease-out forwards;
+  }
+  @keyframes ripple-expand {
+    0% { width: 0; height: 0; opacity: 0.8; border-width: 3px; }
+    100% { width: 200px; height: 200px; opacity: 0; border-width: 1px; }
+  }
+
+  /* Floating "+1" text */
+  .float-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+    pointer-events: none;
+    opacity: 0;
+  }
+  .muyu-wrapper.hit .float-text {
+    animation: float-up-text 0.8s ease-out forwards;
+  }
+  @keyframes float-up-text {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    30% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+    60% { transform: translate(-50%, -120%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -180%) scale(0.8); opacity: 0; }
+  }
+
+  /* Spark particles */
+  .spark-container {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .spark {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    opacity: 0;
+  }
+  .muyu-wrapper.hit .spark {
+    animation: spark-fly 0.7s ease-out forwards;
+  }
+  @keyframes spark-fly {
+    0% { transform: translate(0,0) scale(0); opacity: 0; }
+    20% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 1; }
+    100% { transform: translate(calc(var(--tx)*2.5), calc(var(--ty)*2.5)) scale(0); opacity: 0; }
+  }
+
+  /* Counter */
+  .counter {
+    text-align: center;
+    color: #e8d5b7;
+    margin-top: -8px;
+  }
+  .counter .count-num {
+    font-size: 52px;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.3);
+    transition: transform 0.1s ease;
+    display: inline-block;
+  }
+  .counter .count-num.pop {
+    animation: count-pop 0.3s ease-out;
+  }
+  @keyframes count-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); color: #fff3a0; }
+    100% { transform: scale(1); }
+  }
+  .counter .count-label {
+    font-size: 13px;
+    color: #5a5a5a;
+    margin-top: 2px;
+  }
+  .counter .count-date {
+    font-size: 12px;
+    color: #3a3a3a;
+    margin-top: 2px;
+  }
+
+  /* Glow effect on the fish */
+  .muyu-glow {
+    transition: filter 0.2s ease;
+  }
+  .muyu-wrapper.hit .muyu-glow {
+    filter: drop-shadow(0 0 15px rgba(255,200,100,0.4));
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .muyu-wrapper { width: 260px; height: 280px; }
+    .counter .count-num { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-particles" id="bgParticles"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>✦ 敲木鱼 ✦</h1>
+    <div class="subtitle">— 心诚则灵 —</div>
+  </div>
+
+  <div class="muyu-wrapper" id="muyuWrapper">
+    <div class="ripple-container">
+      <div class="ripple"></div>
+    </div>
+    <div class="float-text" id="floatText">+1</div>
+    <div class="spark-container" id="sparkContainer"></div>
+
+<svg width="280" height="260" viewBox="0 0 247 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="fishGrad" cx="46%" cy="36%" r="52%">
+          <stop offset="0%" stop-color="#f0c878"/>
+          <stop offset="25%" stop-color="#e0b058"/>
+          <stop offset="55%" stop-color="#c89040"/>
+          <stop offset="100%" stop-color="#8a6028"/>
+        </radialGradient>
+        <radialGradient id="holeGrad" cx="50%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#2a1508"/>
+          <stop offset="100%" stop-color="#0a0500"/>
+        </radialGradient>
+        <linearGradient id="malletGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d0a050"/>
+          <stop offset="100%" stop-color="#8a6028"/>
+        </linearGradient>
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <g filter="url(#shadow)">
+        <path
+          d="M109.12 6.53 C124.09 4.27 139.37 2.82 154.47 4.79 C173.07 7.14 191.38 14.02 206.02 25.89 C217.01 34.77 225.17 46.63 231.55 59.13 C237.81 72.25 241.16 86.53 243.92 100.74 C225.49 104.75 206.58 105.76 187.77 106.20 C186.21 100.02 183.12 93.94 177.74 90.25 C172.00 85.96 163.98 84.19 157.26 87.18 C145.99 91.69 139.62 105.22 142.63 116.85 C145.12 127.39 154.97 136.11 166.05 135.69 C176.18 134.97 184.61 126.81 187.19 117.22 C192.74 116.73 198.32 116.63 203.89 116.32 C217.57 115.26 231.14 113.14 244.82 111.98 C245.52 121.28 246.13 130.75 244.11 139.94 C242.32 149.02 239.23 158.07 233.39 165.39 C224.88 176.55 212.15 183.64 199.01 187.98 C187.42 191.86 175.20 193.41 163.05 194.29 C140.40 195.87 117.64 195.62 94.99 194.19 C74.79 192.81 54.55 190.78 34.79 186.17 C27.91 184.54 21.07 182.47 14.77 179.21 C8.58 175.93 4.23 169.71 2.72 162.92 C-0.48 151.41 3.00 139.09 9.20 129.21 C14.61 119.75 27.61 116.88 30.81 105.83 C35.50 90.01 37.28 73.40 42.87 57.82 C47.56 45.36 54.34 33.26 64.82 24.75 C77.25 14.19 93.24 9.04 109.12 6.53Z"
+          fill="url(#fishGrad)" stroke="#7a4e24" stroke-width="1.2"
+        />
+        <path
+          d="M187.77 106.20 C186.21 100.02 183.12 93.94 177.74 90.25 C172.00 85.96 163.98 84.19 157.26 87.18 C145.99 91.69 139.62 105.22 142.63 116.85 C145.12 127.39 154.97 136.11 166.05 135.69 C176.18 134.97 184.61 126.81 187.19 117.22 C192.74 116.73 198.32 116.63 203.89 116.32 C217.57 115.26 231.14 113.14 244.82 111.98 C225.49 104.75 206.58 105.76 187.77 106.20Z"
+          fill="url(#holeGrad)"
+        />
+      </g>
+      <!-- Mallet -->
+      <g class="mallet-group" transform-origin="123.5 30">
+        <rect x="120.5" y="30" width="7" height="70" rx="3.5" fill="url(#malletGrad)" stroke="#6a4420" stroke-width="0.7"/>
+        <ellipse cx="123.5" cy="24" rx="15" ry="11" fill="url(#malletGrad)" stroke="#6a4420" stroke-width="0.9"/>
+        <ellipse cx="121" cy="21" rx="6" ry="4" fill="#e0b058" opacity="0.3"/>
+        <ellipse cx="123.5" cy="16" rx="9" ry="6" fill="#6a4420" stroke="#4a2a10" stroke-width="0.6"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="counter">
+    <div class="count-num" id="countDisplay">0</div>
+    <div class="count-label">今日已敲</div>
+    <div class="count-date" id="dateDisplay"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- Background particles ---
+  const bg = document.getElementById('bgParticles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'bg-particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = (Math.random() * 100 + 20) + '%';
+    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+    p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    bg.appendChild(p);
+  }
+
+  // --- DOM refs ---
+  const wrapper = document.getElementById('muyuWrapper');
+  const countDisplay = document.getElementById('countDisplay');
+  const dateDisplay = document.getElementById('dateDisplay');
+  const floatText = document.getElementById('floatText');
+  const sparkContainer = document.getElementById('sparkContainer');
+
+  // --- Audio context (lazy init) ---
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playKnockSound() {
+    try {
+      const ctx = getAudioCtx();
+      // Main knock - short percussive burst
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.12);
+
+      // Resonance body
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(400, ctx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
+      gain2.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime);
+      osc2.stop(ctx.currentTime + 0.2);
+
+      // Noise burst
+      const bufferSize = ctx.sampleRate * 0.04;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+      }
+      const noise = ctx.createBufferSource();
+      const gain3 = ctx.createGain();
+      noise.buffer = buffer;
+      gain3.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      noise.connect(gain3);
+      gain3.connect(ctx.destination);
+      noise.start(ctx.currentTime);
+    } catch(e) {
+      // Audio not available
+    }
+  }
+
+  // --- State ---
+  let currentCount = 0;
+  let currentDate = '';
+  let isAnimating = false;
+  let pendingKnocks = 0;
+  let syncTimer = null;
+
+  // --- Date display ---
+  function updateDateDisplay() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    const wd = weekdays[d.getDay()];
+    dateDisplay.textContent = `${y}年${m}月${day}日 星期${wd}`;
+  }
+  updateDateDisplay();
+
+  // --- API ---
+  async function fetchCount() {
+    try {
+      const res = await fetch('/api/count');
+      const data = await res.json();
+      currentDate = data.date;
+      currentCount = data.count;
+      countDisplay.textContent = currentCount;
+    } catch(e) {
+      console.warn('Failed to fetch count:', e);
+    }
+  }
+
+  async function sendKnock(count) {
+    try {
+      const res = await fetch('/api/knock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ increment: count })
+      });
+      const data = await res.json();
+      if (data.date === currentDate) {
+        currentCount = data.count;
+        countDisplay.textContent = currentCount;
+      } else {
+        currentDate = data.date;
+        currentCount = data.count;
+        countDisplay.textContent = currentCount;
+        updateDateDisplay();
+      }
+    } catch(e) {
+      currentCount += count;
+      countDisplay.textContent = currentCount;
+    }
+  }
+
+  function scheduleSync() {
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      if (pendingKnocks > 0) {
+        const batch = pendingKnocks;
+        pendingKnocks = 0;
+        sendKnock(batch);
+      }
+    }, 1000);
+  }
+
+  // --- Knock action ---
+  function doKnock() {
+    if (isAnimating) {
+      // Chain knock: just remove and re-add class
+      wrapper.classList.remove('hit');
+      // Force reflow
+      void wrapper.offsetWidth;
+    }
+
+    // Play sound
+    playKnockSound();
+
+    // Create spark particles
+    for (let i = 0; i < 8; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.5;
+      const dist = 30 + Math.random() * 40;
+      spark.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+      spark.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+      spark.style.background = `hsl(${35 + Math.random() * 20}, 100%, ${60 + Math.random() * 30}%)`;
+      spark.style.boxShadow = `0 0 4px rgba(255,200,100,0.6)`;
+      spark.style.animationDuration = (0.5 + Math.random() * 0.3) + 's';
+      sparkContainer.appendChild(spark);
+    }
+
+    // Add hit class
+    wrapper.classList.add('hit');
+    isAnimating = true;
+
+    // Pop counter
+    countDisplay.classList.remove('pop');
+    void countDisplay.offsetWidth;
+    countDisplay.classList.add('pop');
+
+    // Randomize float text
+    const texts = ['+1', '功德+1', '阿弥陀佛', '善哉', '🙏', '随喜赞叹'];
+    floatText.textContent = texts[Math.floor(Math.random() * texts.length)];
+
+    // Increment locally immediately (responsive), then batch-sync to server
+    currentCount++;
+    countDisplay.textContent = currentCount;
+    pendingKnocks++;
+    scheduleSync();
+
+    // Cleanup
+    setTimeout(() => {
+      wrapper.classList.remove('hit');
+      isAnimating = false;
+      // Remove spark elements
+      const sparks = sparkContainer.querySelectorAll('.spark');
+      sparks.forEach(s => s.remove());
+    }, 800);
+  }
+
+  // --- Events ---
+  wrapper.addEventListener('click', (e) => {
+    doKnock();
+    // Mini haptic hint via slight scale
+    wrapper.style.transform = 'scale(0.97)';
+    setTimeout(() => { wrapper.style.transform = ''; }, 100);
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      doKnock();
+    }
+  });
+
+  // --- Init ---
+  fetchCount();
+
+  // Periodic refresh
+  setInterval(() => {
+    const d = new Date();
+    if (currentDate && currentDate !== `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`) {
+      fetchCount();
+      updateDateDisplay();
+    }
+  }, 60000);
+})();
+</script>
+</body>
+</html>

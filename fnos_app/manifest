@@ -1,0 +1,15 @@
+appname="cyber-woodenfish"
+version="1.0.0"
+display_name="敲木鱼"
+desc="一个精致的桌面木鱼插件。点击木鱼敲击计数，支持连续敲击，动画精致，功德随喜。"
+maintainer="Your Name"
+maintainer_url="https://github.com/yourname/cyber-woodenfish"
+source="thirdparty"
+platform="all"
+desktop_uidir="ui"
+desktop_applaunchname="cyber-woodenfish.main"
+os_min_version="1.1.3100"
+install_dep_apps=nodejs_v22
+service_port=3001
+checkport=true
+ctl_stop=true
