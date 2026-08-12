@@ -66,8 +66,8 @@
   .muyu-wrapper {
     position: relative;
     cursor: pointer;
-    width: min(280px, 60vw, 60vh);
-    aspect-ratio: 280 / 260;
+    width: 280px;
+    height: 260px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -223,21 +223,8 @@
 
   /* Responsive */
   @media (max-width: 480px) {
-    .muyu-wrapper { width: 260px; }
+    .muyu-wrapper { width: 260px; height: 280px; }
     .counter .count-num { font-size: 40px; }
-  }
-
-  /* Small window support - scale everything down */
-  @media (max-height: 500px), (max-width: 400px) {
-    .container { gap: 12px; }
-    .header h1 { font-size: 16px; }
-    .header .subtitle { font-size: 11px; }
-    .muyu-wrapper {
-      width: min(200px, 55vw, 55vh);
-    }
-    .counter .count-num { font-size: 32px; }
-    .counter .count-label { font-size: 11px; }
-    .counter .count-date { font-size: 10px; }
   }
 </style>
 </head>
