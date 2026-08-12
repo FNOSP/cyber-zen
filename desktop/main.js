@@ -27,7 +27,11 @@ function createWindow(url) {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url: targetUrl }) => {
-    if (targetUrl.startsWith("https://github.com/FNOSP/cyber-zen")) {
+    const allowedUrls = [
+      "https://github.com/FNOSP/cyber-zen",
+      "https://github.com/jiongjiongJOJO",
+    ];
+    if (allowedUrls.some((allowedUrl) => targetUrl === allowedUrl || targetUrl.startsWith(`${allowedUrl}/`))) {
       void shell.openExternal(targetUrl);
     }
     return { action: "deny" };
