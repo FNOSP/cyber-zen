@@ -31,7 +31,12 @@ function getTodayKey() {
 }
 
 function getCountsPath(kind = "woodenfish") {
-  return path.join(DATA_DIR, kind === "incense" ? "incense.json" : "counts.json");
+  const filenames = {
+    woodenfish: "counts.json",
+    incense: "incense.json",
+    cicada: "cicada.json",
+  };
+  return path.join(DATA_DIR, filenames[kind] || filenames.woodenfish);
 }
 
 function readCounts(kind) {
@@ -99,6 +104,22 @@ const server = http.createServer(async (req, res) => {
     const today = getTodayKey();
     counts[today] = (counts[today] || 0) + increment;
     writeCounts(counts, "incense");
+    return sendJSON(res, 200, { date: today, count: counts[today] });
+  }
+
+  if (pathname === "/api/cicada" && req.method === "GET") {
+    const counts = readCounts("cicada");
+    const today = getTodayKey();
+    return sendJSON(res, 200, { date: today, count: counts[today] || 0 });
+  }
+
+  if (pathname === "/api/cicada" && req.method === "POST") {
+    const body = await parseBody(req);
+    const increment = typeof body.increment === "number" ? Math.max(1, Math.floor(body.increment)) : 1;
+    const counts = readCounts("cicada");
+    const today = getTodayKey();
+    counts[today] = (counts[today] || 0) + increment;
+    writeCounts(counts, "cicada");
     return sendJSON(res, 200, { date: today, count: counts[today] });
   }
 
