@@ -1,526 +1,60 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>敲木鱼</title>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>禅</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
-    background: #111;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    user-select: none;
-  }
-
-  /* Subtle floating particles background */
-  .bg-particles {
-    position: fixed; inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .bg-particle {
-    position: absolute;
-    width: 3px; height: 3px;
-    background: rgba(255,200,120,0.08);
-    border-radius: 50%;
-    animation: float-up linear infinite;
-  }
-  @keyframes float-up {
-    0% { transform: translateY(0) scale(1); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 0.3; }
-    100% { transform: translateY(-100vh) scale(0); opacity: 0; }
-  }
-
-  .container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-  }
-
-  /* Header */
-  .header {
-    text-align: center;
-    color: #e8d5b7;
-    letter-spacing: 0.15em;
-  }
-  .header h1 {
-    font-size: 22px;
-    font-weight: 400;
-    text-shadow: 0 0 20px rgba(200,160,100,0.3);
-  }
-  .header .subtitle {
-    font-size: 13px;
-    color: #5a5a5a;
-    margin-top: 4px;
-  }
-
-  /* Fish wrapper */
-  .muyu-wrapper {
-    position: relative;
-    cursor: pointer;
-    width: 280px;
-    height: 260px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .muyu-wrapper:active .muyu-body-group {
-    transform: scale(0.97);
-  }
-
-  .muyu-body-group {
-    transition: transform 0.06s ease;
-  }
-
-  /* Hit shake animation */
-  .muyu-wrapper.hit .muyu-body-group {
-    animation: hit-shake 0.3s ease-out;
-  }
-  @keyframes hit-shake {
-    0% { transform: translateX(0) rotate(0deg); }
-    15% { transform: translateX(-3px) rotate(-1deg); }
-    30% { transform: translateX(3px) rotate(1deg); }
-    45% { transform: translateX(-2px) rotate(-0.5deg); }
-    60% { transform: translateX(2px) rotate(0.5deg); }
-    80% { transform: translateX(-1px) rotate(-0.2deg); }
-    100% { transform: translateX(0) rotate(0deg); }
-  }
-
-  /* Mallet animation */
-  .mallet-group {
-    transition: transform 0.05s ease;
-    transform-origin: 160px 60px;
-  }
-  .muyu-wrapper.hit .mallet-group {
-    animation: mallet-strike 0.3s ease-out;
-  }
-  @keyframes mallet-strike {
-    0% { transform: rotate(0deg); }
-    20% { transform: rotate(25deg); }
-    50% { transform: rotate(-15deg); }
-    70% { transform: rotate(5deg); }
-    85% { transform: rotate(-2deg); }
-    100% { transform: rotate(0deg); }
-  }
-
-  /* Ripple effect */
-  .ripple-container {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  .ripple {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 0; height: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(255,200,140,0.6);
-    transform: translate(-50%, -50%);
-    opacity: 0;
-  }
-  .muyu-wrapper.hit .ripple {
-    animation: ripple-expand 0.6s ease-out forwards;
-  }
-  @keyframes ripple-expand {
-    0% { width: 0; height: 0; opacity: 0.8; border-width: 3px; }
-    100% { width: 200px; height: 200px; opacity: 0; border-width: 1px; }
-  }
-
-  /* Floating "+1" text */
-  .float-text {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 36px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 0 0 10px rgba(255,215,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
-    pointer-events: none;
-    opacity: 0;
-  }
-  .muyu-wrapper.hit .float-text {
-    animation: float-up-text 0.8s ease-out forwards;
-  }
-  @keyframes float-up-text {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-    30% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
-    60% { transform: translate(-50%, -120%) scale(1); opacity: 0.8; }
-    100% { transform: translate(-50%, -180%) scale(0.8); opacity: 0; }
-  }
-
-  /* Spark particles */
-  .spark-container {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  .spark {
-    position: absolute;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    opacity: 0;
-  }
-  .muyu-wrapper.hit .spark {
-    animation: spark-fly 0.7s ease-out forwards;
-  }
-  @keyframes spark-fly {
-    0% { transform: translate(0,0) scale(0); opacity: 0; }
-    20% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 1; }
-    100% { transform: translate(calc(var(--tx)*2.5), calc(var(--ty)*2.5)) scale(0); opacity: 0; }
-  }
-
-  /* Counter */
-  .counter {
-    text-align: center;
-    color: #e8d5b7;
-    margin-top: -8px;
-  }
-  .counter .count-num {
-    font-size: 52px;
-    font-weight: 700;
-    color: #ffd700;
-    text-shadow: 0 0 20px rgba(255,215,0,0.3);
-    transition: transform 0.1s ease;
-    display: inline-block;
-  }
-  .counter .count-num.pop {
-    animation: count-pop 0.3s ease-out;
-  }
-  @keyframes count-pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); color: #fff3a0; }
-    100% { transform: scale(1); }
-  }
-  .counter .count-label {
-    font-size: 13px;
-    color: #5a5a5a;
-    margin-top: 2px;
-  }
-  .counter .count-date {
-    font-size: 12px;
-    color: #3a3a3a;
-    margin-top: 2px;
-  }
-
-  /* Glow effect on the fish */
-  .muyu-glow {
-    transition: filter 0.2s ease;
-  }
-  .muyu-wrapper.hit .muyu-glow {
-    filter: drop-shadow(0 0 15px rgba(255,200,100,0.4));
-  }
-
-  /* Responsive */
-  @media (max-width: 480px) {
-    .muyu-wrapper { width: 260px; height: 280px; }
-    .counter .count-num { font-size: 40px; }
-  }
+:root{color-scheme:dark;--gold:#e7b85f;--muted:#776f64;--surface:rgba(255,255,255,.055)}
+*{box-sizing:border-box;margin:0;padding:0}button{font:inherit}body{min-width:200px;min-height:200px;height:100vh;overflow:hidden;user-select:none;background:radial-gradient(circle at 50% 42%,#282119 0,#141210 50%,#090909 100%);color:#eadcc8;font-family:"LXGW WenKai","Noto Serif SC","Source Han Serif SC",serif}
+.particles{position:fixed;inset:0;pointer-events:none;overflow:hidden}.particle{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,194,112,.14);animation:rise linear infinite}@keyframes rise{from{transform:translateY(20vh);opacity:0}15%{opacity:1}to{transform:translateY(-120vh);opacity:0}}
+.app{width:100%;height:100%;position:relative}.page{position:absolute;inset:0;padding:clamp(10px,3vh,24px);display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateX(18px);pointer-events:none;transition:.28s ease}.page.active{opacity:1;transform:none;pointer-events:auto}
+.brand{text-align:center;flex:0 0 auto}.brand h1{font-size:clamp(20px,4vh,28px);font-weight:400;letter-spacing:.42em;margin-left:.42em;text-shadow:0 0 24px rgba(231,184,95,.3)}.subtitle{margin-top:3px;color:var(--muted);font-size:clamp(9px,1.8vh,12px);letter-spacing:.18em}
+.home{justify-content:center;gap:clamp(10px,2.8vh,22px)}.home-logo{width:min(170px,38vw,27vh);aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}.menu{display:grid;grid-template-columns:repeat(2,minmax(120px,160px));gap:12px}.menu-card{appearance:none;border:1px solid rgba(231,184,95,.14);border-radius:18px;padding:15px 12px;background:var(--surface);color:#e8d5b7;cursor:pointer;text-align:left;transition:.2s}.menu-card:hover{transform:translateY(-2px);border-color:rgba(231,184,95,.38);background:rgba(255,255,255,.08)}.menu-icon{font-size:25px}.menu-title{display:block;margin-top:7px;font-size:15px}.menu-desc{display:block;margin-top:3px;color:#746d64;font-size:10px}
+.tool{gap:clamp(7px,1.4vh,13px)}.tool-head{width:min(390px,94vw);display:grid;grid-template-columns:48px 1fr 48px;align-items:center;flex:0 0 auto}.back{appearance:none;width:36px;height:36px;border:1px solid rgba(231,184,95,.13);border-radius:50%;background:rgba(0,0,0,.2);color:#b7a58e;cursor:pointer;font-size:18px}.tool-title{text-align:center}.tool-title h2{font-size:clamp(16px,3vh,22px);font-weight:400;letter-spacing:.18em}.tool-title span{display:block;margin-top:2px;color:#655e56;font-size:10px}
+.content{flex:1 1 auto;min-height:0;width:min(390px,94vw);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1vh,9px)}.visual{position:relative;width:min(270px,64vw,47vh);height:min(250px,59vw,44vh);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}.visual svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 12px 12px rgba(0,0,0,.34))}
+.fish.hit svg{animation:knock .3s ease-out}@keyframes knock{20%{transform:rotate(-2deg) scale(.96)}48%{transform:rotate(1.5deg) scale(1.01)}}.mallet{transform-origin:218px 54px}.fish.hit .mallet{animation:strike .3s ease-out}@keyframes strike{25%{transform:rotate(22deg)}55%{transform:rotate(-10deg)}}
+.flash{position:absolute;z-index:2;inset:23%;border:2px solid rgba(240,194,104,.65);border-radius:50%;opacity:0;pointer-events:none}.hit .flash,.relit .flash{animation:flash .7s ease-out}@keyframes flash{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.65)}}.float{position:absolute;z-index:10;left:50%;top:38%;transform:translate(-50%,-50%);color:#ffe097;font-size:22px;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;text-shadow:0 0 12px rgba(240,184,72,.8),0 2px 5px rgba(0,0,0,.9)}.hit .float,.relit .float{animation:floatText .85s ease-out}@keyframes floatText{0%{opacity:1;transform:translate(-50%,-20%) scale(.7)}35%{opacity:1;transform:translate(-50%,-80%) scale(1.08)}to{opacity:0;transform:translate(-50%,-160%) scale(.9)}}
+.incense .smoke{opacity:0}.incense.burning .smoke{opacity:.7;stroke-dasharray:16 11;animation:smoke 2.8s linear infinite}@keyframes smoke{to{stroke-dashoffset:-54}}.incense .ember{opacity:0}.incense.burning .ember{opacity:1;animation:flicker .35s ease-in-out infinite alternate}@keyframes flicker{to{filter:drop-shadow(0 0 6px #ff7b36)}}
+.stats{text-align:center;flex:0 0 auto}.number{display:inline-block;color:#ffd36c;font-size:clamp(28px,6.5vh,46px);line-height:1;font-weight:700;text-shadow:0 0 20px rgba(255,205,93,.25)}.number.pop{animation:pop .25s ease-out}@keyframes pop{50%{transform:scale(1.3);color:#fff2bd}}.label{margin-top:3px;color:#756d63;font-size:12px}.status{height:16px;margin-top:2px;color:#8b7f71;font-size:10px}.hint{flex:0 0 auto;color:#4f4942;font-size:10px;letter-spacing:.08em}
+@media(max-width:400px),(max-height:500px){.page{padding:7px}.home{gap:7px}.subtitle,.hint,.menu-desc{display:none}.home-logo{width:min(112px,33vw,25vh)}.menu-card{padding:9px 10px}.menu-icon{font-size:18px}.menu-title{font-size:12px}.tool{gap:3px}.tool-head{grid-template-columns:36px 1fr 36px}.back{width:29px;height:29px}.visual{width:min(190px,61vw,43vh);height:min(176px,57vw,40vh)}.number{font-size:27px}.date{display:none}}
+@media(max-width:260px),(max-height:260px){.brand h1{font-size:15px}.home-logo{width:62px}.menu{gap:5px;grid-template-columns:repeat(2,88px)}.menu-card{padding:6px}.menu-icon{font-size:14px}.menu-title{font-size:10px;margin-top:2px}.tool-title span,.status{display:none}.visual{width:min(130px,58vw,55vh);height:min(120px,54vw,51vh)}.number{font-size:21px}.label{font-size:9px}}
 </style>
 </head>
-<body>
-
-<div class="bg-particles" id="bgParticles"></div>
-
-<div class="container">
-  <div class="header">
-    <h1>✦ 敲木鱼 ✦</h1>
-    <div class="subtitle">— 心诚则灵 —</div>
-  </div>
-
-  <div class="muyu-wrapper" id="muyuWrapper">
-    <div class="ripple-container">
-      <div class="ripple"></div>
-    </div>
-    <div class="float-text" id="floatText">+1</div>
-    <div class="spark-container" id="sparkContainer"></div>
-
-<svg width="280" height="260" viewBox="0 0 247 250" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="fishGrad" cx="46%" cy="36%" r="52%">
-          <stop offset="0%" stop-color="#f0c878"/>
-          <stop offset="25%" stop-color="#e0b058"/>
-          <stop offset="55%" stop-color="#c89040"/>
-          <stop offset="100%" stop-color="#8a6028"/>
-        </radialGradient>
-        <radialGradient id="holeGrad" cx="50%" cy="40%" r="50%">
-          <stop offset="0%" stop-color="#2a1508"/>
-          <stop offset="100%" stop-color="#0a0500"/>
-        </radialGradient>
-        <linearGradient id="malletGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#d0a050"/>
-          <stop offset="100%" stop-color="#8a6028"/>
-        </linearGradient>
-        <filter id="shadow">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <g filter="url(#shadow)">
-        <path
-          d="M109.12 6.53 C124.09 4.27 139.37 2.82 154.47 4.79 C173.07 7.14 191.38 14.02 206.02 25.89 C217.01 34.77 225.17 46.63 231.55 59.13 C237.81 72.25 241.16 86.53 243.92 100.74 C225.49 104.75 206.58 105.76 187.77 106.20 C186.21 100.02 183.12 93.94 177.74 90.25 C172.00 85.96 163.98 84.19 157.26 87.18 C145.99 91.69 139.62 105.22 142.63 116.85 C145.12 127.39 154.97 136.11 166.05 135.69 C176.18 134.97 184.61 126.81 187.19 117.22 C192.74 116.73 198.32 116.63 203.89 116.32 C217.57 115.26 231.14 113.14 244.82 111.98 C245.52 121.28 246.13 130.75 244.11 139.94 C242.32 149.02 239.23 158.07 233.39 165.39 C224.88 176.55 212.15 183.64 199.01 187.98 C187.42 191.86 175.20 193.41 163.05 194.29 C140.40 195.87 117.64 195.62 94.99 194.19 C74.79 192.81 54.55 190.78 34.79 186.17 C27.91 184.54 21.07 182.47 14.77 179.21 C8.58 175.93 4.23 169.71 2.72 162.92 C-0.48 151.41 3.00 139.09 9.20 129.21 C14.61 119.75 27.61 116.88 30.81 105.83 C35.50 90.01 37.28 73.40 42.87 57.82 C47.56 45.36 54.34 33.26 64.82 24.75 C77.25 14.19 93.24 9.04 109.12 6.53Z"
-          fill="url(#fishGrad)" stroke="#7a4e24" stroke-width="1.2"
-        />
-        <path
-          d="M187.77 106.20 C186.21 100.02 183.12 93.94 177.74 90.25 C172.00 85.96 163.98 84.19 157.26 87.18 C145.99 91.69 139.62 105.22 142.63 116.85 C145.12 127.39 154.97 136.11 166.05 135.69 C176.18 134.97 184.61 126.81 187.19 117.22 C192.74 116.73 198.32 116.63 203.89 116.32 C217.57 115.26 231.14 113.14 244.82 111.98 C225.49 104.75 206.58 105.76 187.77 106.20Z"
-          fill="url(#holeGrad)"
-        />
-      </g>
-      <!-- Mallet -->
-      <g class="mallet-group" transform-origin="123.5 30">
-        <rect x="120.5" y="30" width="7" height="70" rx="3.5" fill="url(#malletGrad)" stroke="#6a4420" stroke-width="0.7"/>
-        <ellipse cx="123.5" cy="24" rx="15" ry="11" fill="url(#malletGrad)" stroke="#6a4420" stroke-width="0.9"/>
-        <ellipse cx="121" cy="21" rx="6" ry="4" fill="#e0b058" opacity="0.3"/>
-        <ellipse cx="123.5" cy="16" rx="9" ry="6" fill="#6a4420" stroke="#4a2a10" stroke-width="0.6"/>
-      </g>
-    </svg>
-  </div>
-
-  <div class="counter">
-    <div class="count-num" id="countDisplay">0</div>
-    <div class="count-label">今日已敲</div>
-    <div class="count-date" id="dateDisplay"></div>
-  </div>
-</div>
-
-<script>
-(function() {
-  'use strict';
-
-  // --- Background particles ---
-  const bg = document.getElementById('bgParticles');
-  for (let i = 0; i < 30; i++) {
-    const p = document.createElement('div');
-    p.className = 'bg-particle';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.top = (Math.random() * 100 + 20) + '%';
-    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
-    p.style.animationDuration = (Math.random() * 15 + 10) + 's';
-    p.style.animationDelay = (Math.random() * 10) + 's';
-    bg.appendChild(p);
-  }
-
-  // --- DOM refs ---
-  const wrapper = document.getElementById('muyuWrapper');
-  const countDisplay = document.getElementById('countDisplay');
-  const dateDisplay = document.getElementById('dateDisplay');
-  const floatText = document.getElementById('floatText');
-  const sparkContainer = document.getElementById('sparkContainer');
-
-  // --- Audio context (lazy init) ---
-  let audioCtx = null;
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-  }
-
-  function playKnockSound() {
-    try {
-      const ctx = getAudioCtx();
-      // Main knock - short percussive burst
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(800, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.12);
-
-      // Resonance body
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(400, ctx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
-      gain2.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(ctx.currentTime);
-      osc2.stop(ctx.currentTime + 0.2);
-
-      // Noise burst
-      const bufferSize = ctx.sampleRate * 0.04;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
-      }
-      const noise = ctx.createBufferSource();
-      const gain3 = ctx.createGain();
-      noise.buffer = buffer;
-      gain3.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-      noise.connect(gain3);
-      gain3.connect(ctx.destination);
-      noise.start(ctx.currentTime);
-    } catch(e) {
-      // Audio not available
-    }
-  }
-
-  // --- State ---
-  let currentCount = 0;
-  let currentDate = '';
-  let isAnimating = false;
-  let pendingKnocks = 0;
-  let syncTimer = null;
-
-  // --- Date display ---
-  function updateDateDisplay() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-    const wd = weekdays[d.getDay()];
-    dateDisplay.textContent = `${y}年${m}月${day}日 星期${wd}`;
-  }
-  updateDateDisplay();
-
-  // --- API ---
-  async function fetchCount() {
-    try {
-      const res = await fetch('/api/count');
-      const data = await res.json();
-      currentDate = data.date;
-      currentCount = data.count;
-      countDisplay.textContent = currentCount;
-    } catch(e) {
-      console.warn('Failed to fetch count:', e);
-    }
-  }
-
-  async function sendKnock(count) {
-    try {
-      const res = await fetch('/api/knock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ increment: count })
-      });
-      const data = await res.json();
-      if (data.date === currentDate) {
-        currentCount = data.count;
-        countDisplay.textContent = currentCount;
-      } else {
-        currentDate = data.date;
-        currentCount = data.count;
-        countDisplay.textContent = currentCount;
-        updateDateDisplay();
-      }
-    } catch(e) {
-      currentCount += count;
-      countDisplay.textContent = currentCount;
-    }
-  }
-
-  function scheduleSync() {
-    if (syncTimer) clearTimeout(syncTimer);
-    syncTimer = setTimeout(() => {
-      if (pendingKnocks > 0) {
-        const batch = pendingKnocks;
-        pendingKnocks = 0;
-        sendKnock(batch);
-      }
-    }, 1000);
-  }
-
-  // --- Knock action ---
-  function doKnock() {
-    if (isAnimating) {
-      // Chain knock: just remove and re-add class
-      wrapper.classList.remove('hit');
-      // Force reflow
-      void wrapper.offsetWidth;
-    }
-
-    // Play sound
-    playKnockSound();
-
-    // Create spark particles
-    for (let i = 0; i < 8; i++) {
-      const spark = document.createElement('div');
-      spark.className = 'spark';
-      const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.5;
-      const dist = 30 + Math.random() * 40;
-      spark.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
-      spark.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
-      spark.style.background = `hsl(${35 + Math.random() * 20}, 100%, ${60 + Math.random() * 30}%)`;
-      spark.style.boxShadow = `0 0 4px rgba(255,200,100,0.6)`;
-      spark.style.animationDuration = (0.5 + Math.random() * 0.3) + 's';
-      sparkContainer.appendChild(spark);
-    }
-
-    // Add hit class
-    wrapper.classList.add('hit');
-    isAnimating = true;
-
-    // Pop counter
-    countDisplay.classList.remove('pop');
-    void countDisplay.offsetWidth;
-    countDisplay.classList.add('pop');
-
-    // Randomize float text
-    const texts = ['+1', '功德+1', '阿弥陀佛', '善哉', '🙏', '随喜赞叹'];
-    floatText.textContent = texts[Math.floor(Math.random() * texts.length)];
-
-    // Increment locally immediately (responsive), then batch-sync to server
-    currentCount++;
-    countDisplay.textContent = currentCount;
-    pendingKnocks++;
-    scheduleSync();
-
-    // Cleanup
-    setTimeout(() => {
-      wrapper.classList.remove('hit');
-      isAnimating = false;
-      // Remove spark elements
-      const sparks = sparkContainer.querySelectorAll('.spark');
-      sparks.forEach(s => s.remove());
-    }, 800);
-  }
-
-  // --- Events ---
-  wrapper.addEventListener('click', (e) => {
-    doKnock();
-    // Mini haptic hint via slight scale
-    wrapper.style.transform = 'scale(0.97)';
-    setTimeout(() => { wrapper.style.transform = ''; }, 100);
-  });
-
-  // Keyboard support
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code === 'Enter') {
-      e.preventDefault();
-      doKnock();
-    }
-  });
-
-  // --- Init ---
-  fetchCount();
-
-  // Periodic refresh
-  setInterval(() => {
-    const d = new Date();
-    if (currentDate && currentDate !== `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`) {
-      fetchCount();
-      updateDateDisplay();
-    }
-  }, 60000);
-})();
-</script>
-</body>
-</html>
+<body><div class="particles" id="particles"></div><main class="app">
+<section class="page home active" data-page="home">
+  <div class="brand"><h1>禅</h1><div class="subtitle">赛博修行 · 片刻清净</div></div>
+  <img class="home-logo" src="/icon.png" alt="禅：打坐人物标志"/>
+  <nav class="menu" aria-label="修行功能">
+    <button class="menu-card" data-open="fish"><span class="menu-icon">◉</span><span class="menu-title">赛博木鱼</span><span class="menu-desc">一敲一念，功德随喜</span></button>
+    <button class="menu-card" data-open="incense"><span class="menu-icon">♨</span><span class="menu-title">赛博烧香</span><span class="menu-desc">敬上三炷香，静心三分钟</span></button>
+  </nav>
+</section>
+<section class="page tool" data-page="fish">
+  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博木鱼</h2><span>一敲一念 · 功德随喜</span></div><i></i></header>
+  <div class="content"><div class="visual fish" id="fish" role="button" tabindex="0" aria-label="敲木鱼"><div class="flash"></div><div class="float" id="fishFloat">功德 +1</div>
+    <svg viewBox="0 0 280 250" aria-hidden="true"><defs><radialGradient id="fishWood" cx="48%" cy="30%" r="70%"><stop stop-color="#efb66f"/><stop offset=".52" stop-color="#b96e31"/><stop offset="1" stop-color="#673518"/></radialGradient><linearGradient id="malletWood" x2="1" y2="1"><stop stop-color="#e5aa5c"/><stop offset="1" stop-color="#713a18"/></linearGradient></defs>
+      <ellipse cx="135" cy="204" rx="101" ry="18" fill="#090807" opacity=".45"/><path d="M29 165C39 73 92 25 168 31c44 3 72 29 83 67L103 124c-18 3-22 27-8 38 16 12 34 5 45-2l112-56c4 42-9 80-44 98-31 16-116 13-156-5-18-8-26-18-23-32Z" fill="url(#fishWood)" stroke="#663719" stroke-width="3" stroke-linejoin="round"/><path d="M102 124 251 98c2 7 2 12 1 18L138 160c-19 9-37 9-47-2-11-12-6-30 11-34Z" fill="#321508"/><path d="M36 160c-17 3-22 17-14 30 5 8 18 7 30 7-15-10-20-22-16-37Z" fill="#8e4c22"/>
+      <g class="mallet"><rect x="176" y="38" width="10" height="113" rx="5" fill="url(#malletWood)" transform="rotate(30 181 94)"/><ellipse cx="218" cy="44" rx="24" ry="18" fill="url(#fishWood)" transform="rotate(30 218 44)"/></g></svg>
+  </div><div class="stats"><div class="number" id="fishCount">0</div><div class="label">今日已敲</div><div class="status sharedDate"></div></div></div><div class="hint">点击木鱼，或按空格键</div>
+</section>
+<section class="page tool" data-page="incense">
+  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博烧香</h2><span>三炷清香 · 三分钟静心</span></div><i></i></header>
+  <div class="content"><div class="visual incense" id="incense" role="button" tabindex="0" aria-label="点燃三炷香"><div class="flash"></div><div class="float" id="incenseFloat">清净 +1</div>
+    <svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="bronze" x2="0" y2="1"><stop stop-color="#dda753"/><stop offset=".5" stop-color="#885027"/><stop offset="1" stop-color="#3b2114"/></linearGradient></defs>
+      <g id="smokes"><path class="smoke" data-smoke="0" d="M112 78c-22-14 16-31-3-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="1" d="M140 69c22-16-14-28 5-47" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="2" d="M168 78c-20-14 15-30-4-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/></g>
+      <path d="M65 180h150l-16 49c-4 12-16 18-30 18H111c-14 0-26-6-30-18Z" fill="url(#bronze)" stroke="#d3a052" stroke-width="2"/><ellipse cx="140" cy="180" rx="76" ry="23" fill="#a66631" stroke="#e0ad5c" stroke-width="3"/><ellipse cx="140" cy="180" rx="61" ry="14" fill="#352016"/>
+      <g class="sticks"><g data-stick="0"><rect class="stick" x="108" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="108" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="1"><rect class="stick" x="136.5" y="68" width="7" height="114" rx="3.5" fill="#9b4430"/><rect class="ember" x="136.5" y="66" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="2"><rect class="stick" x="165" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="165" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g></g>
+      <path d="M64 180Q140 207 216 180L213 191Q140 216 67 191Z" fill="#92582b" stroke="#dda95a" stroke-width="2"/><circle cx="112" cy="180" r="6" fill="#6f4327"/><circle cx="140" cy="180" r="6" fill="#6f4327"/><circle cx="168" cy="180" r="6" fill="#6f4327"/><path d="M101 224h78" stroke="#d69a47" stroke-width="3" stroke-linecap="round" opacity=".55"/></svg>
+  </div><div class="stats"><div class="number" id="incenseCount">0</div><div class="label">今日已上香</div><div class="status" id="burnStatus">点击敬上三炷香</div></div></div><div class="hint">燃烧中再次点击，将换上新的三炷香</div>
+</section>
+</main><script>
+(()=>{'use strict';const BURN_MS=180000,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],state={page:'home',fish:0,incense:0,pendingFish:0,fishTimer:null,burnTimer:null};const fish=$('#fish'),incense=$('#incense'),fishCount=$('#fishCount'),incenseCount=$('#incenseCount');
+for(let i=0;i<24;i++){const p=document.createElement('i');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;top:${80+Math.random()*50}%;animation-duration:${12+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;$('#particles').appendChild(p)}const d=new Date(),week='日一二三四五六';$$('.sharedDate').forEach(e=>e.textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${week[d.getDay()]}`);
+let audio;function tone(type){try{audio||=new(AudioContext||webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type==='fish'?'triangle':'sine';o.frequency.setValueAtTime(type==='fish'?500:820,t);o.frequency.exponentialRampToValueAtTime(type==='fish'?140:410,t+.25);g.gain.setValueAtTime(type==='fish'?.34:.14,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+.4)}catch{}}function animate(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);setTimeout(()=>el.classList.remove(c),900)}function pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
+function openPage(page){state.page=page;$$('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===page))}$$('[data-open]').forEach(b=>b.onclick=()=>openPage(b.dataset.open));$$('.back').forEach(b=>b.onclick=()=>openPage('home'));
+async function load(){for(const mode of['fish','incense'])try{const x=await fetch(mode==='fish'?'/api/count':'/api/incense').then(r=>r.json());state[mode]=x.count;(mode==='fish'?fishCount:incenseCount).textContent=x.count}catch{}resumeBurn()}async function flushFish(){const n=state.pendingFish;state.pendingFish=0;if(!n)return;try{const x=await fetch('/api/knock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({increment:n})}).then(r=>r.json());state.fish=x.count;fishCount.textContent=x.count}catch{}}async function postIncense(){try{const x=await fetch('/api/incense',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"increment":1}'}).then(r=>r.json());state.incense=x.count;incenseCount.textContent=x.count}catch{}}
+function actFish(){tone('fish');state.fish++;state.pendingFish++;fishCount.textContent=state.fish;pop(fishCount);$('#fishFloat').textContent=['功德 +1','善哉','随喜','阿弥陀佛'][Math.floor(Math.random()*4)];animate(fish,'hit');clearTimeout(state.fishTimer);state.fishTimer=setTimeout(flushFish,700)}
+const original=[{y:77,h:105,ey:75,sy:0},{y:68,h:114,ey:66,sy:-9},{y:77,h:105,ey:75,sy:0}];function renderBurn(){const end=Number(localStorage.getItem('zen-incense-end')||0),left=Math.max(0,end-Date.now()),ratio=left/BURN_MS;if(!left){incense.classList.remove('burning');$('#burnStatus').textContent='香已燃尽 · 点击重新上香';clearInterval(state.burnTimer);state.burnTimer=null;localStorage.removeItem('zen-incense-end');return}incense.classList.add('burning');$$('.stick').forEach((el,i)=>{const o=original[i],h=Math.max(3,o.h*ratio),y=182-h;el.setAttribute('y',y);el.setAttribute('height',h);const ember=$$('[data-stick]')[i].querySelector('.ember');ember.setAttribute('y',y-2);$$('[data-smoke]')[i].setAttribute('transform',`translate(0 ${y-o.y})`)});const sec=Math.ceil(left/1000);$('#burnStatus').textContent=`燃烧中 · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
+function resumeBurn(){if(Number(localStorage.getItem('zen-incense-end')||0)>Date.now()){renderBurn();clearInterval(state.burnTimer);state.burnTimer=setInterval(renderBurn,250)}else renderBurn()}function actIncense(){tone('incense');localStorage.setItem('zen-incense-end',String(Date.now()+BURN_MS));state.incense++;incenseCount.textContent=state.incense;pop(incenseCount);$('#incenseFloat').textContent=['三炷清香','一念清净','心安','自在'][Math.floor(Math.random()*4)];animate(incense,'relit');postIncense();resumeBurn()}
+fish.onclick=actFish;incense.onclick=actIncense;document.addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&state.page!=='home'){e.preventDefault();state.page==='fish'?actFish():actIncense()}});addEventListener('beforeunload',flushFish);load()})();
+</script></body></html>

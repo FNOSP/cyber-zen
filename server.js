@@ -29,20 +29,20 @@ function getTodayKey() {
   return `${y}-${m}-${day}`;
 }
 
-function getCountsPath() {
-  return path.join(DATA_DIR, "counts.json");
+function getCountsPath(kind = "woodenfish") {
+  return path.join(DATA_DIR, kind === "incense" ? "incense.json" : "counts.json");
 }
 
-function readCounts() {
+function readCounts(kind) {
   try {
-    return JSON.parse(fs.readFileSync(getCountsPath(), "utf8"));
+    return JSON.parse(fs.readFileSync(getCountsPath(kind), "utf8"));
   } catch {
     return {};
   }
 }
 
-function writeCounts(data) {
-  fs.writeFileSync(getCountsPath(), JSON.stringify(data, null, 2));
+function writeCounts(data, kind) {
+  fs.writeFileSync(getCountsPath(kind), JSON.stringify(data, null, 2));
 }
 
 function parseBody(req) {
@@ -85,6 +85,22 @@ const server = http.createServer(async (req, res) => {
     return sendJSON(res, 200, { date: today, count: counts[today] });
   }
 
+  if (pathname === "/api/incense" && req.method === "GET") {
+    const counts = readCounts("incense");
+    const today = getTodayKey();
+    return sendJSON(res, 200, { date: today, count: counts[today] || 0 });
+  }
+
+  if (pathname === "/api/incense" && req.method === "POST") {
+    const body = await parseBody(req);
+    const increment = typeof body.increment === "number" ? Math.max(1, Math.floor(body.increment)) : 1;
+    const counts = readCounts("incense");
+    const today = getTodayKey();
+    counts[today] = (counts[today] || 0) + increment;
+    writeCounts(counts, "incense");
+    return sendJSON(res, 200, { date: today, count: counts[today] });
+  }
+
   if (pathname === "/api/health" && req.method === "GET") {
     return sendJSON(res, 200, { status: "ok" });
   }
@@ -113,5 +129,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🪵 木鱼应用已启动: http://localhost:${PORT}`);
+  console.log(`禅应用已启动: http://localhost:${PORT}`);
 });

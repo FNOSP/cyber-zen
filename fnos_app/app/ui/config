@@ -1,8 +1,9 @@
 {
   ".url": {
-    "cyber-woodenfish.main": {
-      "title": "敲木鱼",
-      "icon": "images/icon_{0}.png",
+    "cyber-zen.Application": {
+      "title": "禅",
+      "desc": "赛博修行，片刻清净",
+      "icon": "images/icon-{0}.png",
       "type": "iframe",
       "protocol": "http",
       "port": "3001",

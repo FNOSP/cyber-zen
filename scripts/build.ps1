@@ -1,79 +1,84 @@
-param(
-  [switch]$Install,
-  [switch]$Push
-)
-
 $ErrorActionPreference = "Stop"
-$ROOT = Split-Path -Parent $PSScriptRoot
-$APP_DIR = Join-Path $ROOT "fnos_app"
-$FPK_NAME = "cyber-woodenfish.fpk"
 
-Write-Host "=== 打包 敲木鱼 fnOS 应用 ===" -ForegroundColor Cyan
+# 远程服务器配置
+$SshHost = "192.168.86.198"
+$SshPort = 22
+$SshUser = "admin"
+$SshPassword = "adminadmin1"
+$RemoteParentDir = "/vol1/1000/datas"
+$RemoteAppDirectory = "fnos_app"
+$AppName = "cyber-zen"
+$CleanRemoteBuildDir = $true
 
-# 1. 同步源码到 app 目录
-Write-Host "[1/4] 同步源码到 fnos_app/app ..." -ForegroundColor Yellow
-Copy-Item (Join-Path $ROOT "server.js") (Join-Path $APP_DIR "app\server.js") -Force
-if (Test-Path (Join-Path $APP_DIR "app\public")) {
-  Remove-Item (Join-Path $APP_DIR "app\public") -Recurse -Force
-}
-Copy-Item (Join-Path $ROOT "public") (Join-Path $APP_DIR "app\public") -Recurse -Force
+$Root = Split-Path -Parent $PSScriptRoot
+$AppDir = Join-Path $Root "fnos_app"
+$SshTarget = "$SshUser@$SshHost"
+$RemoteAppDir = "$RemoteParentDir/$RemoteAppDirectory"
+$SshOptions = @("-p", $SshPort, "-o", "StrictHostKeyChecking=accept-new")
 
-# 2. 修复 cmd 生命周期脚本
-Write-Host "[2/4] 补齐生命周期脚本 ..." -ForegroundColor Yellow
-$scripts = @("install_init", "install_callback", "upgrade_init", "upgrade_callback",
-             "uninstall_init", "uninstall_callback", "config_init", "config_callback")
-$CMD_DIR = Join-Path $APP_DIR "cmd"
-foreach ($s in $scripts) {
-  $p = Join-Path $CMD_DIR $s
-  if (-not (Test-Path $p)) {
-    Set-Content -Path $p -Value "#!/bin/bash`nexit 0" -Encoding Ascii
-  }
-}
-Get-ChildItem $CMD_DIR | ForEach-Object { $_.Attributes = "Normal" }
-
-# 3. 推送到 git（可选）
-if ($Push) {
-  Write-Host "[3/4] 推送 git ..." -ForegroundColor Yellow
-  Set-Location $ROOT
-  git add -A
-  git commit --allow-empty -m "chore: build prep $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-  git push
-  Write-Host "  git 推送完成" -ForegroundColor Green
-} else {
-  Write-Host "[3/4] 跳过 git 推送（使用 -Push 参数启用）" -ForegroundColor DarkGray
+if ([string]::IsNullOrWhiteSpace($SshPassword) -or $SshPassword -eq "请在此填写 SSH 密码") {
+  throw "请先在脚本顶部填写 `$SshPassword。"
 }
 
-# 4. 远程打包安装（可选）
-if ($Install) {
-  Write-Host "[4/4] 远程部署到 fnOS ..." -ForegroundColor Yellow
-  # 传输源码
-  opsctl cp -r $APP_DIR "hyper-v-fnos:/vol1/1000/datas/fnos_app" 2>&1 | Out-Null
-  # 远程打包
-  $build = opsctl exec hyper-v-fnos --type ssh -- "cd /vol1/1000/datas/fnos_app && fnpack build 2>&1" 2>&1
-  if ($build -match "successfully") {
-    Write-Host "  打包成功" -ForegroundColor Green
-    # 卸载旧版
-    opsctl exec hyper-v-fnos --type ssh -- "echo 'adminadmin1' | sudo -S appcenter-cli stop cyber-woodenfish 2>&1 | Out-Null
-    opsctl exec hyper-v-fnos --type ssh -- "echo 'adminadmin1' | sudo -S appcenter-cli uninstall cyber-woodenfish 2>&1 | Out-Null
-    # 安装新版
-    $install = opsctl exec hyper-v-fnos --type ssh -- "echo 'adminadmin1' | sudo -S appcenter-cli install-fpk --volume 1 /vol1/1000/datas/fnos_app/cyber-woodenfish.fpk 2>&1" 2>&1
-    if ($install -match "complete|success") {
-      Write-Host "  安装成功" -ForegroundColor Green
-      opsctl exec hyper-v-fnos --type ssh -- "echo 'adminadmin1' | sudo -S appcenter-cli start cyber-woodenfish 2>&1 | Out-Null
-      Write-Host "  应用已启动" -ForegroundColor Green
-    } else {
-      Write-Host "  安装失败: $install" -ForegroundColor Red
-    }
+Write-Host "=== 打包 $AppName ===" -ForegroundColor Cyan
+
+# 1. 准备待打包的应用目录
+Write-Host "[1/3] 同步本地源码到 fnos_app/app ..." -ForegroundColor Yellow
+Copy-Item (Join-Path $Root "server.js") (Join-Path $AppDir "app/server.js") -Force
+if (Test-Path (Join-Path $AppDir "app/public")) {
+  Remove-Item (Join-Path $AppDir "app/public") -Recurse -Force
+}
+Copy-Item (Join-Path $Root "public") (Join-Path $AppDir "app/public") -Recurse -Force
+
+# OpenSSH 本身不接受命令行密码；通过临时 SSH_ASKPASS 脚本提供密码。
+$AskPassFile = Join-Path $env:TEMP "fnos-ssh-askpass-$PID.cmd"
+$OldAskPass = $env:SSH_ASKPASS
+$OldAskPassRequire = $env:SSH_ASKPASS_REQUIRE
+$OldDisplay = $env:DISPLAY
+$OldPassword = $env:FNOS_SSH_PASSWORD
+
+try {
+  Set-Content -LiteralPath $AskPassFile -Value '@powershell.exe -NoProfile -Command "[Console]::Out.Write($env:FNOS_SSH_PASSWORD)"' -Encoding Ascii -NoNewline
+  $env:FNOS_SSH_PASSWORD = $SshPassword
+  $env:SSH_ASKPASS = $AskPassFile
+  $env:SSH_ASKPASS_REQUIRE = "force"
+  $env:DISPLAY = "fnos"
+
+  # 2. 清理远程打包暂存目录并上传应用源码（不影响已安装应用的数据）。
+  Write-Host "[2/3] 清理并上传源码到 ${SshTarget}:$RemoteAppDir ..." -ForegroundColor Yellow
+  if ($CleanRemoteBuildDir) {
+    $PrepareCommand = "test '$RemoteAppDir' = '$RemoteParentDir/$RemoteAppDirectory' && rm -rf -- '$RemoteAppDir' && mkdir -p '$RemoteAppDir'"
   } else {
-    Write-Host "  打包失败: $build" -ForegroundColor Red
+    $PrepareCommand = "mkdir -p '$RemoteAppDir'"
   }
-} else {
-  Write-Host "[4/4] 跳过远程部署（使用 -Install 参数启用）" -ForegroundColor DarkGray
-}
+  & ssh.exe @SshOptions $SshTarget $PrepareCommand
+  if ($LASTEXITCODE -ne 0) { throw "无法准备远程打包目录。" }
 
-Write-Host "=== 完成 ===" -ForegroundColor Cyan
-Write-Host "使用方式:"
-Write-Host "  .\build.ps1              # 仅本地同步"
-Write-Host "  .\build.ps1 -Push        # 同步 + git 推送"
-Write-Host "  .\build.ps1 -Install     # 同步 + 远程部署到 fnOS"
-Write-Host "  .\build.ps1 -Push -Install  # 全部"
+  $SourceItems = Get-ChildItem -LiteralPath $AppDir -Force | Select-Object -ExpandProperty FullName
+  & scp.exe -r -P $SshPort -o "StrictHostKeyChecking=accept-new" @SourceItems "${SshTarget}:${RemoteAppDir}/"
+  if ($LASTEXITCODE -ne 0) { throw "源码上传失败。" }
+
+  # Windows SCP 上传的权限可能让 fnpack 无法读取 manifest；统一为常规目录/文件权限。
+  $PermissionCommand = "find '$RemoteAppDir' -type d -exec chmod 755 {} + && find '$RemoteAppDir' -type f -exec chmod 644 {} + && find '$RemoteAppDir/cmd' -type f -exec chmod 755 {} +"
+  & ssh.exe @SshOptions $SshTarget $PermissionCommand
+  if ($LASTEXITCODE -ne 0) { throw "无法修复远程文件权限。" }
+
+  # 3. 在远端打包并输出实际生成的 FPK 路径。
+  Write-Host "[3/3] 在远端执行打包 ..." -ForegroundColor Yellow
+  $BuildCommand = "export HOME=/tmp/fnpack-$SshUser; mkdir -p `"`$HOME`"; cd '$RemoteAppDir' || exit 1; fnpack build 2>&1; build_status=`$?; if [ `$build_status -ne 0 ]; then exit `$build_status; fi; package=`$(find '$RemoteAppDir' -maxdepth 1 -type f -name '*.fpk' -printf '%f\n' | head -n 1); if [ -z `"`$package`" ]; then echo '未找到 fnpack 生成的 .fpk 文件。' >&2; exit 1; fi; printf '%s/%s\n' '$RemoteAppDir' `"`$package`""
+  $RemoteOutput = & ssh.exe @SshOptions $SshTarget $BuildCommand 2>&1
+  $RemoteOutput | ForEach-Object { Write-Host $_ }
+  if ($LASTEXITCODE -ne 0) { throw "远程打包失败。请根据上方 fnpack 输出排查。" }
+
+  $RemotePackage = $RemoteOutput | Where-Object { $_ -match '\.fpk$' } | Select-Object -Last 1
+  $PackageDir = Split-Path $RemotePackage -Parent
+  Write-Host "打包完成，产物目录：$PackageDir" -ForegroundColor Green
+  Write-Host "FPK 文件：$RemotePackage" -ForegroundColor Green
+}
+finally {
+  Remove-Item -LiteralPath $AskPassFile -Force -ErrorAction SilentlyContinue
+  $env:SSH_ASKPASS = $OldAskPass
+  $env:SSH_ASKPASS_REQUIRE = $OldAskPassRequire
+  $env:DISPLAY = $OldDisplay
+  $env:FNOS_SSH_PASSWORD = $OldPassword
+}
