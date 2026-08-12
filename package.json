@@ -1,10 +1,60 @@
 {
   "name": "cyber-zen",
   "version": "1.0.0",
+  "description": "赛博修行，片刻清净。",
+  "author": "囧囧JOJO",
   "private": true,
   "type": "module",
+  "main": "desktop/main.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "electron .",
+    "dev": "electron .",
+    "desktop": "electron .",
+    "serve": "node server.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.fnosp.cyberzen",
+    "productName": "禅",
+    "asar": true,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "desktop/**/*",
+      "public/**/*",
+      "server.js",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico",
+      "artifactName": "cyber-zen-${version}-windows-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "禅"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "artifactName": "cyber-zen-${version}-linux-${arch}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.lifestyle",
+      "artifactName": "cyber-zen-${version}-macos-${arch}.${ext}"
+    }
   }
 }

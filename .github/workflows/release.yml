@@ -1,0 +1,141 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "发布标签，例如 v1.0.0"
+        required: true
+        default: "v1.0.0"
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  desktop:
+    name: Desktop (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            args: --win --x64
+            artifact: windows
+          - name: Linux x64
+            os: ubuntu-latest
+            args: --linux --x64
+            artifact: linux
+          - name: macOS Intel and Apple Silicon
+            os: macos-latest
+            args: --mac --x64 --arm64
+            artifact: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build desktop package
+        run: npm run dist -- ${{ matrix.args }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyber-zen-${{ matrix.artifact }}
+          path: |
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  fnos:
+    name: fnOS FPK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare fnOS package
+        run: |
+          rm -rf fnos_app/app/public
+          mkdir -p fnos_app/app/public
+          cp server.js fnos_app/app/server.js
+          cp -a public/. fnos_app/app/public/
+          chmod 755 fnos_app/cmd/*
+      - name: Install fnpack
+        run: |
+          sudo wget -q https://static2.fnnas.com/fnpack/fnpack-1.2.1-linux-amd64 -O /usr/local/bin/fnpack
+          sudo chmod +x /usr/local/bin/fnpack
+          fnpack --help >/dev/null
+      - name: Build FPK
+        working-directory: fnos_app
+        run: fnpack build
+      - name: Upload FPK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyber-zen-fnos
+          path: fnos_app/*.fpk
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: [desktop, fnos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: cyber-zen-*
+          merge-multiple: true
+      - name: List release assets
+        run: find release-assets -maxdepth 1 -type f -printf '%f\n' | sort
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$previous_tag" ]; then
+            changes=$(git log --pretty=format:'- %s (%h)' "$previous_tag"..HEAD)
+          else
+            changes=$(git log --pretty=format:'- %s (%h)' -20)
+          fi
+          {
+            echo 'body<<EOF'
+            echo "## 禅 ${RELEASE_TAG}"
+            echo
+            echo '### 变更内容'
+            echo
+            echo "$changes"
+            echo
+            echo '### 下载说明'
+            echo
+            echo '- Windows：下载 `.exe` 安装包'
+            echo '- Linux：下载 `.AppImage`，添加执行权限后运行'
+            echo '- macOS：按芯片下载对应的 `.dmg`'
+            echo '- 飞牛 fnOS：下载 `.fpk` 手动安装'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+      - name: Create release and upload packages
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: 禅 ${{ env.RELEASE_TAG }}
+          body: ${{ steps.notes.outputs.body }}
+          draft: false
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
+          files: release-assets/*
