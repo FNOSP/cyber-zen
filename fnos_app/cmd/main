@@ -31,14 +31,25 @@ start_app() {
   if status_app; then
     return 0
   fi
-  log_msg "Starting Woodenfish..."
+  local service_port="${wizard_port:-}"
+  if [ -z "$service_port" ] && [ -f "${TRIM_PKGVAR}/service_port" ]; then
+    service_port="$(head -n 1 "${TRIM_PKGVAR}/service_port" | tr -d '[:space:]')"
+  fi
+  service_port="${service_port:-${TRIM_SERVICE_PORT:-3001}}"
+  case "$service_port" in
+    ''|*[!0-9]*)
+      echo "Invalid service port: $service_port" > "$TRIM_TEMP_LOGFILE"
+      exit 1
+      ;;
+  esac
+  log_msg "Starting Zen on port $service_port..."
   cd "$APP_DIR" || exit 1
-  DATA_DIR="$DATA_DIR" PORT="$TRIM_SERVICE_PORT" node server.js >> "$LOG_FILE" 2>&1 &
+  DATA_DIR="$DATA_DIR" PORT="$service_port" node server.js >> "$LOG_FILE" 2>&1 &
   echo "$!" > "$PID_FILE"
 }
 
 stop_app() {
-  log_msg "Stopping Woodenfish..."
+  log_msg "Stopping Zen..."
   if [ ! -f "$PID_FILE" ]; then
     return 0
   fi

@@ -6,7 +6,7 @@
       "icon": "images/icon-{0}.png",
       "type": "iframe",
       "protocol": "http",
-      "port": "3001",
+      "port": "${wizard_port}",
       "url": "/",
       "allUsers": true
     }

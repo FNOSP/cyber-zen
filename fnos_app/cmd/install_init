@@ -1,2 +1,26 @@
 #!/bin/bash
+
+fail_install() {
+  echo "$1" > "$TRIM_TEMP_LOGFILE"
+  exit 1
+}
+
+case "$wizard_port" in
+  ''|*[!0-9]*) fail_install "服务端口必须是 1024–65535 范围内的数字。" ;;
+esac
+
+if [ "$wizard_port" -lt 1024 ] || [ "$wizard_port" -gt 65535 ]; then
+  fail_install "服务端口必须在 1024–65535 范围内。"
+fi
+
+if command -v ss >/dev/null 2>&1; then
+  if ss -ltnH 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$wizard_port$"; then
+    fail_install "端口 $wizard_port 已被占用，请返回并选择其他端口。"
+  fi
+elif command -v netstat >/dev/null 2>&1; then
+  if netstat -ltn 2>/dev/null | awk 'NR > 2 {print $4}' | grep -Eq "(^|:)$wizard_port$"; then
+    fail_install "端口 $wizard_port 已被占用，请返回并选择其他端口。"
+  fi
+fi
+
 exit 0

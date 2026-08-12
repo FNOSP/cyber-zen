@@ -1,0 +1,28 @@
+[
+  {
+    "stepTitle": "设置服务端口",
+    "items": [
+      {
+        "type": "tips",
+        "helpText": "请选择一个未被其他应用占用的端口，用于打开“禅”的 Web 界面。"
+      },
+      {
+        "type": "text",
+        "field": "wizard_port",
+        "label": "服务端口",
+        "helpText": "有效范围：1024–65535",
+        "initValue": "3001",
+        "rules": [
+          {
+            "required": true,
+            "message": "请输入服务端口"
+          },
+          {
+            "pattern": "^[0-9]{4,5}$",
+            "message": "请输入 1024–65535 范围内的端口"
+          }
+        ]
+      }
+    ]
+  }
+]

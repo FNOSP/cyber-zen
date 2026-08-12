@@ -1,2 +1,14 @@
 #!/bin/bash
+
+case "$wizard_port" in
+  ''|*[!0-9]*)
+    echo "无法保存服务端口：端口值无效。" > "$TRIM_TEMP_LOGFILE"
+    exit 1
+    ;;
+esac
+
+mkdir -p "$TRIM_PKGVAR"
+printf '%s\n' "$wizard_port" > "$TRIM_PKGVAR/service_port"
+chmod 600 "$TRIM_PKGVAR/service_port"
+
 exit 0
