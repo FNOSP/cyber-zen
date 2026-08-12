@@ -115,10 +115,14 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/api/cicada" && req.method === "POST") {
     const body = await parseBody(req);
-    const increment = typeof body.increment === "number" ? Math.max(1, Math.floor(body.increment)) : 1;
     const counts = readCounts("cicada");
     const today = getTodayKey();
-    counts[today] = (counts[today] || 0) + increment;
+    if (typeof body.count === "number") {
+      counts[today] = Math.max(counts[today] || 0, Math.max(0, Math.floor(body.count)));
+    } else {
+      const increment = typeof body.increment === "number" ? Math.max(1, Math.floor(body.increment)) : 1;
+      counts[today] = (counts[today] || 0) + increment;
+    }
     writeCounts(counts, "cicada");
     return sendJSON(res, 200, { date: today, count: counts[today] });
   }
