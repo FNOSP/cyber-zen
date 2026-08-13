@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "发布标签，例如 v1.0.0"
+        description: "发布标签，例如 v1.0.1"
         required: true
-        default: "v1.0.0"
+        default: "v1.0.1"
         type: string
 
 permissions:
@@ -46,6 +46,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Run tests
+        run: npm test
       - name: Build desktop package
         run: npm run dist -- ${{ matrix.args }} --publish never
         env:

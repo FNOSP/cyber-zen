@@ -1,7 +1,7 @@
 {
   "name": "cyber-zen",
-  "version": "1.0.0",
-  "description": "赛博修行，片刻清净。",
+  "version": "1.0.1",
+  "description": "赛博修行，片刻清净。包含九种禅趣、静心、创作与记录体验。",
   "author": "囧囧JOJO",
   "private": true,
   "type": "module",
@@ -11,6 +11,7 @@
     "dev": "electron .",
     "desktop": "electron .",
     "serve": "node server.js",
+    "test": "node --test",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
@@ -29,6 +30,7 @@
     "files": [
       "desktop/**/*",
       "public/**/*",
+      "build/icon.png",
       "server.js",
       "package.json"
     ],

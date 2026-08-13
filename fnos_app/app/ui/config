@@ -2,7 +2,7 @@
   ".url": {
     "cyber-zen.Application": {
       "title": "禅",
-      "desc": "赛博修行，片刻清净",
+      "desc": "九种禅趣、静心、创作与记录体验",
       "icon": "images/icon-{0}.png",
       "type": "iframe",
       "protocol": "http",

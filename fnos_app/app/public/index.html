@@ -1,93 +1,113 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>禅</title>
-<style>
-:root{color-scheme:dark;--gold:#e7b85f;--muted:#776f64;--surface:rgba(255,255,255,.055)}
-*{box-sizing:border-box;margin:0;padding:0}button{font:inherit}body{min-width:200px;min-height:200px;height:100vh;overflow:hidden;user-select:none;background:radial-gradient(circle at 50% 42%,#282119 0,#141210 50%,#090909 100%);color:#eadcc8;font-family:"LXGW WenKai","Noto Serif SC","Source Han Serif SC",serif}
-.particles{position:fixed;inset:0;pointer-events:none;overflow:hidden}.particle{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,194,112,.14);animation:rise linear infinite}@keyframes rise{from{transform:translateY(20vh);opacity:0}15%{opacity:1}to{transform:translateY(-120vh);opacity:0}}
-.app{width:100%;height:100%;position:relative}.page{position:absolute;inset:0;padding:clamp(10px,3vh,24px);display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateX(18px);pointer-events:none;transition:.28s ease}.page.active{opacity:1;transform:none;pointer-events:auto}
-.brand{text-align:center;flex:0 0 auto}.brand h1{font-size:clamp(26px,5vh,36px);font-weight:400;letter-spacing:.42em;margin-left:.42em;text-shadow:0 0 24px rgba(231,184,95,.3)}.subtitle{margin-top:4px;color:var(--muted);font-size:clamp(12px,2vh,15px);letter-spacing:.18em}
-.home{justify-content:center;gap:clamp(9px,2.2vh,18px)}.home-logo{width:min(140px,33vw,22vh);aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}.menu{display:grid;grid-template-columns:repeat(2,minmax(130px,175px));gap:12px}.menu-card{position:relative;appearance:none;border:1px solid rgba(231,184,95,.14);border-radius:18px;padding:16px 14px;background:var(--surface);color:#e8d5b7;cursor:pointer;text-align:left;transition:.2s}.menu-card:hover{transform:translateY(-2px);border-color:rgba(231,184,95,.38);background:rgba(255,255,255,.08)}.menu-card.featured{grid-column:1/-1;border-color:rgba(55,205,194,.28);background:linear-gradient(135deg,rgba(41,161,158,.09),rgba(231,184,95,.07))}.badges{position:absolute;right:10px;top:9px;display:flex;gap:4px}.badge{padding:2px 6px;border-radius:999px;font-size:10px;line-height:1.4;letter-spacing:.04em}.badge.pick{color:#9ff5e7;background:rgba(25,150,144,.22);border:1px solid rgba(71,218,205,.24)}.badge.hot{color:#ffd3a3;background:rgba(211,83,35,.2);border:1px solid rgba(244,122,62,.24)}.menu-icon{font-size:28px}.menu-title{display:block;margin-top:7px;font-size:17px}.menu-desc{display:block;margin-top:4px;color:#8b8176;font-size:12px}.about-entry{appearance:none;border:0;background:transparent;color:#958879;cursor:pointer;font-size:13px;letter-spacing:.12em;padding:5px 12px}.about-entry:hover{color:#e1bf83}
-.tool{gap:clamp(7px,1.4vh,13px)}.tool-head{width:min(430px,94vw);display:grid;grid-template-columns:48px 1fr 48px;align-items:center;flex:0 0 auto}.back{appearance:none;width:38px;height:38px;border:1px solid rgba(231,184,95,.13);border-radius:50%;background:rgba(0,0,0,.2);color:#c7b49b;cursor:pointer;font-size:22px}.tool-title{text-align:center}.tool-title h2{font-size:clamp(20px,3.4vh,27px);font-weight:400;letter-spacing:.12em}.tool-title span{display:block;margin-top:3px;color:#7b7167;font-size:12px}
-.content{flex:1 1 auto;min-height:0;width:min(390px,94vw);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1vh,9px)}.visual{position:relative;width:min(270px,64vw,47vh);height:min(250px,59vw,44vh);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}.visual svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 12px 12px rgba(0,0,0,.34))}
-.fish.hit svg{animation:knock .3s ease-out}@keyframes knock{20%{transform:rotate(-2deg) scale(.96)}48%{transform:rotate(1.5deg) scale(1.01)}}.mallet{transform-origin:218px 54px}.fish.hit .mallet{animation:strike .3s ease-out}@keyframes strike{25%{transform:rotate(22deg)}55%{transform:rotate(-10deg)}}
-.flash{position:absolute;z-index:2;inset:23%;border:2px solid rgba(240,194,104,.65);border-radius:50%;opacity:0;pointer-events:none}.hit .flash,.relit .flash{animation:flash .7s ease-out}@keyframes flash{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.65)}}.float{position:absolute;z-index:10;left:50%;top:38%;transform:translate(-50%,-50%);color:#ffe097;font-size:22px;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;text-shadow:0 0 12px rgba(240,184,72,.8),0 2px 5px rgba(0,0,0,.9)}.hit .float,.relit .float{animation:floatText .85s ease-out}@keyframes floatText{0%{opacity:1;transform:translate(-50%,-20%) scale(.7)}35%{opacity:1;transform:translate(-50%,-80%) scale(1.08)}to{opacity:0;transform:translate(-50%,-160%) scale(.9)}}
-.incense .smoke{opacity:0}.incense.burning .smoke{opacity:.7;stroke-dasharray:16 11;animation:smoke 2.8s linear infinite}@keyframes smoke{to{stroke-dashoffset:-54}}.incense .ember{opacity:0}.incense.burning .ember{opacity:1;animation:flicker .35s ease-in-out infinite alternate}@keyframes flicker{to{filter:drop-shadow(0 0 6px #ff7b36)}}
-.cicada-content{gap:4px}.cicada-visual{cursor:grab}.cicada-visual.dragging{cursor:grabbing}.cicada-visual canvas{width:100%;height:100%;touch-action:none}.cicada-controls{display:flex;align-items:center;gap:8px}.auto-btn{appearance:none;border:1px solid rgba(74,211,199,.25);border-radius:999px;padding:7px 16px;background:rgba(35,160,153,.09);color:#83d9cf;cursor:pointer;font-size:13px}.auto-btn.active{color:#17130e;background:linear-gradient(135deg,#7ce2d5,#d8b666);box-shadow:0 0 14px rgba(65,210,199,.18)}.speed-bars{display:flex;gap:3px;align-items:flex-end;height:18px}.speed-bars i{display:block;width:3px;height:5px;border-radius:3px;background:#3a4542;transition:.12s}.speed-bars i.on{background:#67d5c9;box-shadow:0 0 5px rgba(74,220,206,.5)}
-.stats{text-align:center;flex:0 0 auto}.number{display:inline-block;color:#ffd36c;font-size:clamp(34px,7vh,52px);line-height:1;font-weight:700;text-shadow:0 0 20px rgba(255,205,93,.25)}.number.pop{animation:pop .25s ease-out}@keyframes pop{50%{transform:scale(1.3);color:#fff2bd}}.label{margin-top:4px;color:#908478;font-size:14px}.status{height:19px;margin-top:3px;color:#a19486;font-size:12px}.hint{flex:0 0 auto;color:#71675e;font-size:12px;letter-spacing:.08em}
-.about-content{justify-content:center;gap:18px}.about-logo{width:min(150px,36vw,25vh);aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 9px 18px rgba(0,0,0,.35))}.about-card{width:min(390px,92vw);padding:20px 22px;border:1px solid rgba(231,184,95,.14);border-radius:18px;background:var(--surface)}.about-row{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:9px 0;font-size:14px;line-height:1.5}.about-row+.about-row{border-top:1px solid rgba(255,255,255,.055)}.about-label{color:#80756a}.about-value{color:#e3d3be;min-width:0}.repo-link{color:#72d9ce;text-decoration:none;overflow-wrap:anywhere}.repo-link:hover{text-decoration:underline;color:#a2eee6}.about-desc{text-align:center;color:#8d8276;font-size:13px;line-height:1.7}
-@media(max-width:400px),(max-height:500px){.page{padding:7px}.home{gap:6px}.subtitle,.hint,.menu-desc{display:none}.home-logo{width:min(88px,27vw,19vh)}.menu{gap:7px}.menu-card{padding:8px 10px}.menu-icon{font-size:20px}.menu-title{font-size:13px}.about-entry{font-size:11px;padding:3px 9px}.tool{gap:3px}.tool-head{grid-template-columns:36px 1fr 36px}.back{width:30px;height:30px;font-size:18px}.tool-title h2{font-size:17px}.tool-title span{font-size:10px}.visual{width:min(190px,61vw,43vh);height:min(176px,57vw,40vh)}.number{font-size:29px}.label{font-size:11px}.status{font-size:10px;height:15px}.date{display:none}.badge{font-size:8px}.cicada-controls{gap:5px}.auto-btn{padding:5px 11px;font-size:11px}.about-content{gap:7px}.about-logo{width:min(76px,25vw,18vh)}.about-card{padding:8px 12px}.about-row{padding:4px 0;font-size:11px;grid-template-columns:52px 1fr}.about-desc{font-size:10px}}
-@media(max-width:260px),(max-height:260px){.brand h1{font-size:17px}.home-logo{display:none}.menu{gap:4px;grid-template-columns:repeat(2,88px)}.menu-card{padding:5px}.menu-icon{font-size:14px}.menu-title{font-size:10px;margin-top:1px}.badges{display:none}.about-entry{font-size:9px}.tool-title h2{font-size:12px}.tool-title span,.status{display:none}.visual{width:min(130px,58vw,55vh);height:min(120px,54vw,51vh)}.number{font-size:22px}.label{font-size:9px}.about-logo,.about-desc{display:none}.about-card{padding:5px 9px}.about-row{padding:3px 0;font-size:9px;grid-template-columns:42px 1fr}}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#141210"/>
+  <title>禅</title>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
-<body><div class="particles" id="particles"></div><main class="app">
-<section class="page home active" data-page="home">
-  <div class="brand"><h1>禅</h1><div class="subtitle">赛博修行 · 片刻清净</div></div>
-  <img class="home-logo" src="/icon.png" alt="禅：打坐人物标志"/>
-  <nav class="menu" aria-label="修行功能">
-    <button class="menu-card" data-open="fish"><span class="menu-icon">◉</span><span class="menu-title">赛博木鱼</span><span class="menu-desc">一敲一念，功德随喜</span></button>
-    <button class="menu-card" data-open="incense"><span class="menu-icon">♨</span><span class="menu-title">赛博烧香</span><span class="menu-desc">敬上三炷香，静心三分钟</span></button>
-    <button class="menu-card featured" data-open="cicada"><span class="badges"><b class="badge pick">玄武推荐</b><b class="badge hot">热门</b></span><span class="menu-icon">⌁</span><span class="menu-title">1000万以内最好玩的竹知了</span><span class="menu-desc">按住画圈，找回童年的“哇哇”声</span></button>
-  </nav>
-  <button class="about-entry" data-open="about">关于“禅”</button>
-</section>
-<section class="page tool" data-page="fish">
-  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博木鱼</h2><span>一敲一念 · 功德随喜</span></div><i></i></header>
-  <div class="content"><div class="visual fish" id="fish" role="button" tabindex="0" aria-label="敲木鱼"><div class="flash"></div><div class="float" id="fishFloat">功德 +1</div>
-    <svg viewBox="0 0 280 250" aria-hidden="true"><defs><radialGradient id="fishWood" cx="48%" cy="30%" r="70%"><stop stop-color="#efb66f"/><stop offset=".52" stop-color="#b96e31"/><stop offset="1" stop-color="#673518"/></radialGradient><linearGradient id="malletWood" x2="1" y2="1"><stop stop-color="#e5aa5c"/><stop offset="1" stop-color="#713a18"/></linearGradient></defs>
-      <ellipse cx="135" cy="204" rx="101" ry="18" fill="#090807" opacity=".45"/><path d="M29 165C39 73 92 25 168 31c44 3 72 29 83 67L103 124c-18 3-22 27-8 38 16 12 34 5 45-2l112-56c4 42-9 80-44 98-31 16-116 13-156-5-18-8-26-18-23-32Z" fill="url(#fishWood)" stroke="#663719" stroke-width="3" stroke-linejoin="round"/><path d="M102 124 251 98c2 7 2 12 1 18L138 160c-19 9-37 9-47-2-11-12-6-30 11-34Z" fill="#321508"/><path d="M36 160c-17 3-22 17-14 30 5 8 18 7 30 7-15-10-20-22-16-37Z" fill="#8e4c22"/>
-      <g class="mallet"><rect x="176" y="38" width="10" height="113" rx="5" fill="url(#malletWood)" transform="rotate(30 181 94)"/><ellipse cx="218" cy="44" rx="24" ry="18" fill="url(#fishWood)" transform="rotate(30 218 44)"/></g></svg>
-  </div><div class="stats"><div class="number" id="fishCount">0</div><div class="label">今日已敲</div><div class="status sharedDate"></div></div></div><div class="hint">点击木鱼，或按空格键</div>
-</section>
-<section class="page tool" data-page="incense">
-  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博烧香</h2><span>三炷清香 · 三分钟静心</span></div><i></i></header>
-  <div class="content"><div class="visual incense" id="incense" role="button" tabindex="0" aria-label="点燃三炷香"><div class="flash"></div><div class="float" id="incenseFloat">清净 +1</div>
-    <svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="bronze" x2="0" y2="1"><stop stop-color="#dda753"/><stop offset=".5" stop-color="#885027"/><stop offset="1" stop-color="#3b2114"/></linearGradient></defs>
-      <g id="smokes"><path class="smoke" data-smoke="0" d="M112 78c-22-14 16-31-3-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="1" d="M140 69c22-16-14-28 5-47" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="2" d="M168 78c-20-14 15-30-4-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/></g>
-      <path d="M65 180h150l-16 49c-4 12-16 18-30 18H111c-14 0-26-6-30-18Z" fill="url(#bronze)" stroke="#d3a052" stroke-width="2"/><ellipse cx="140" cy="180" rx="76" ry="23" fill="#a66631" stroke="#e0ad5c" stroke-width="3"/><ellipse cx="140" cy="180" rx="61" ry="14" fill="#352016"/>
-      <g class="sticks"><g data-stick="0"><rect class="stick" x="108" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="108" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="1"><rect class="stick" x="136.5" y="68" width="7" height="114" rx="3.5" fill="#9b4430"/><rect class="ember" x="136.5" y="66" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="2"><rect class="stick" x="165" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="165" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g></g>
-      <path d="M64 180Q140 207 216 180L213 191Q140 216 67 191Z" fill="#92582b" stroke="#dda95a" stroke-width="2"/><circle cx="112" cy="180" r="6" fill="#6f4327"/><circle cx="140" cy="180" r="6" fill="#6f4327"/><circle cx="168" cy="180" r="6" fill="#6f4327"/><path d="M101 224h78" stroke="#d69a47" stroke-width="3" stroke-linecap="round" opacity=".55"/></svg>
-  </div><div class="stats"><div class="number" id="incenseCount">0</div><div class="label">今日已上香</div><div class="status" id="burnStatus">点击敬上三炷香</div></div></div><div class="hint">燃烧中再次点击，将换上新的三炷香</div>
-</section>
-<section class="page tool" data-page="cicada">
-  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>1000万以内最好玩的竹知了</h2><span>竹声回旋 · 童趣自来</span></div><i></i></header>
-  <div class="content cicada-content"><div class="visual cicada-visual" id="cicadaToy" role="application" tabindex="0" aria-label="按住并画圈甩动竹知了"><canvas id="cicadaCanvas" width="560" height="500"></canvas></div>
-    <div class="cicada-controls"><button class="auto-btn" id="autoCicada">自动甩</button><span class="speed-bars" id="speedBars" aria-label="甩动速度"><i></i><i></i><i></i><i></i><i></i></span></div>
-    <div class="stats"><div class="number" id="waaCount">0</div><div class="label">今日手动哇数</div><div class="status" id="cicadaStatus">按住画圈，越快越响</div></div>
-  </div><div class="hint">鼠标或手指画圈 · 空格键切换自动甩</div>
-</section>
-<section class="page tool" data-page="about">
-  <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>关于“禅”</h2><span>赛博修行 · 片刻清净</span></div><i></i></header>
-  <div class="content about-content">
-    <img class="about-logo" src="/icon.png" alt="禅应用图标"/>
-    <div class="about-card">
-      <div class="about-row"><span class="about-label">应用</span><span class="about-value">禅</span></div>
-      <div class="about-row"><span class="about-label">版本</span><span class="about-value">1.0.0</span></div>
-      <div class="about-row"><span class="about-label">作者</span><a class="about-value repo-link" href="https://github.com/jiongjiongJOJO" target="_blank" rel="noopener noreferrer">囧囧JOJO</a></div>
-      <div class="about-row"><span class="about-label">GitHub</span><a class="about-value repo-link" href="https://github.com/FNOSP/cyber-zen" target="_blank" rel="noopener noreferrer">FNOSP/cyber-zen</a></div>
-    </div>
-    <p class="about-desc">赛博修行，片刻清净。<br/>愿每一次互动，都能带来一点轻松与自在。</p>
-  </div>
-</section>
-</main><script>
-(()=>{'use strict';const BURN_MS=180000,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],state={page:'home',fish:0,incense:0,pendingFish:0,fishTimer:null,burnTimer:null};const fish=$('#fish'),incense=$('#incense'),fishCount=$('#fishCount'),incenseCount=$('#incenseCount');
-for(let i=0;i<24;i++){const p=document.createElement('i');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;top:${80+Math.random()*50}%;animation-duration:${12+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;$('#particles').appendChild(p)}const d=new Date(),week='日一二三四五六';$$('.sharedDate').forEach(e=>e.textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${week[d.getDay()]}`);
-let audio;function tone(type){try{audio||=new(AudioContext||webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type==='fish'?'triangle':'sine';o.frequency.setValueAtTime(type==='fish'?500:820,t);o.frequency.exponentialRampToValueAtTime(type==='fish'?140:410,t+.25);g.gain.setValueAtTime(type==='fish'?.34:.14,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+.4)}catch{}}function animate(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c);setTimeout(()=>el.classList.remove(c),900)}function pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
-function openPage(page){state.page=page;$$('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===page))}$$('[data-open]').forEach(b=>b.onclick=()=>openPage(b.dataset.open));$$('.back').forEach(b=>b.onclick=()=>openPage('home'));
-async function load(){for(const mode of['fish','incense'])try{const x=await fetch(mode==='fish'?'/api/count':'/api/incense').then(r=>r.json());state[mode]=x.count;(mode==='fish'?fishCount:incenseCount).textContent=x.count}catch{}await loadCicada();resumeBurn()}async function flushFish(){const n=state.pendingFish;state.pendingFish=0;if(!n)return;try{const x=await fetch('/api/knock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({increment:n})}).then(r=>r.json());state.fish=x.count;fishCount.textContent=x.count}catch{}}async function postIncense(){try{const x=await fetch('/api/incense',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"increment":1}'}).then(r=>r.json());state.incense=x.count;incenseCount.textContent=x.count}catch{}}
-function actFish(){tone('fish');state.fish++;state.pendingFish++;fishCount.textContent=state.fish;pop(fishCount);$('#fishFloat').textContent=['功德 +1','善哉','随喜','阿弥陀佛'][Math.floor(Math.random()*4)];animate(fish,'hit');clearTimeout(state.fishTimer);state.fishTimer=setTimeout(flushFish,700)}
-const original=[{y:77,h:105,ey:75,sy:0},{y:68,h:114,ey:66,sy:-9},{y:77,h:105,ey:75,sy:0}];function renderBurn(){const end=Number(localStorage.getItem('zen-incense-end')||0),left=Math.max(0,end-Date.now()),ratio=left/BURN_MS;if(!left){incense.classList.remove('burning');$('#burnStatus').textContent='香已燃尽 · 点击重新上香';clearInterval(state.burnTimer);state.burnTimer=null;localStorage.removeItem('zen-incense-end');return}incense.classList.add('burning');$$('.stick').forEach((el,i)=>{const o=original[i],h=Math.max(3,o.h*ratio),y=182-h;el.setAttribute('y',y);el.setAttribute('height',h);const ember=$$('[data-stick]')[i].querySelector('.ember');ember.setAttribute('y',y-2);$$('[data-smoke]')[i].setAttribute('transform',`translate(0 ${y-o.y})`)});const sec=Math.ceil(left/1000);$('#burnStatus').textContent=`燃烧中 · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
-function resumeBurn(){if(Number(localStorage.getItem('zen-incense-end')||0)>Date.now()){renderBurn();clearInterval(state.burnTimer);state.burnTimer=setInterval(renderBurn,250)}else renderBurn()}function actIncense(){tone('incense');localStorage.setItem('zen-incense-end',String(Date.now()+BURN_MS));state.incense++;incenseCount.textContent=state.incense;pop(incenseCount);$('#incenseFloat').textContent=['三炷清香','一念清净','心安','自在'][Math.floor(Math.random()*4)];animate(incense,'relit');postIncense();resumeBurn()}
-const toy=$('#cicadaToy'),canvas=$('#cicadaCanvas'),cx=canvas.getContext('2d'),waaCount=$('#waaCount'),waaKey=`zen-cicada-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`,AUTO_SPEED=19;let waa=Number(localStorage.getItem(waaKey)||0),toyAngle=.5,toySpeed=0,lastFrame=performance.now(),dragging=false,lastPointerAngle=0,manualArc=0,autoCicada=false,cicadaOsc,cicadaGain,cicadaFilter;waaCount.textContent=waa;
-async function postCicada(count){return fetch('/api/cicada',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count})}).then(r=>r.json())}async function loadCicada(){try{const x=await fetch('/api/cicada').then(r=>r.json()),local=Number(localStorage.getItem(waaKey)||0);waa=Math.max(local,x.count);if(waa>x.count)await postCicada(waa);localStorage.setItem(waaKey,String(waa));waaCount.textContent=waa}catch{}}function saveCicada(){localStorage.setItem(waaKey,String(waa));void postCicada(waa).catch(()=>{})}function beaconCicada(){navigator.sendBeacon('/api/cicada',new Blob([JSON.stringify({count:waa})],{type:'application/json'}))}
-function ensureCicadaAudio(){try{audio||=new(AudioContext||webkitAudioContext)();if(cicadaOsc)return;cicadaOsc=audio.createOscillator();cicadaGain=audio.createGain();cicadaFilter=audio.createBiquadFilter();cicadaOsc.type='sawtooth';cicadaOsc.frequency.value=72;cicadaFilter.type='bandpass';cicadaFilter.frequency.value=980;cicadaFilter.Q.value=2.8;cicadaGain.gain.value=.0001;cicadaOsc.connect(cicadaFilter).connect(cicadaGain).connect(audio.destination);cicadaOsc.start()}catch{}}
-function countWaa(delta){manualArc+=Math.abs(delta);while(manualArc>=Math.PI*2){manualArc-=Math.PI*2;waa++;waaCount.textContent=waa;pop(waaCount);saveCicada()}}
-function pointerAngle(e){const r=canvas.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))}function moveToy(e){if(!dragging)return;const a=pointerAngle(e),now=performance.now(),raw=Math.atan2(Math.sin(a-lastPointerAngle),Math.cos(a-lastPointerAngle));lastPointerAngle=a;const dt=Math.max(.008,(now-lastFrame)/1000);toySpeed=toySpeed*.55+(raw/dt)*.45;toyAngle+=raw;countWaa(raw);updateCicadaStatus();e.preventDefault()}
-function setAuto(enabled){ensureCicadaAudio();autoCicada=enabled;$('#autoCicada').classList.toggle('active',enabled);$('#autoCicada').textContent=enabled?'停止自动':'自动甩';updateCicadaStatus()}toy.onpointerdown=e=>{setAuto(false);dragging=true;toy.classList.add('dragging');lastPointerAngle=pointerAngle(e);lastFrame=performance.now();toy.setPointerCapture(e.pointerId)};toy.onpointermove=moveToy;function releaseToy(){dragging=false;toy.classList.remove('dragging');saveCicada()}toy.onpointerup=releaseToy;toy.onpointercancel=releaseToy;
-function toggleAuto(){setAuto(!autoCicada)}$('#autoCicada').onclick=toggleAuto;function updateCicadaStatus(){const turns=Math.abs(toySpeed)/(Math.PI*2),level=Math.min(5,Math.max(0,Math.floor(turns*1.65)));$$('#speedBars i').forEach((b,i)=>b.classList.toggle('on',i<level));$('#cicadaStatus').textContent=autoCicada?'自动高速回旋 · 自动模式不计数':turns<.55?'按住画圈，越快越响':turns<1.5?'竹声初起 · 再快一些':turns<2.8?'哇——哇—— 正得劲':'高能回旋 · 注意音量'}
-function roundedRect(x,y,w,h,r){cx.beginPath();cx.roundRect(x,y,w,h,r);cx.fill();cx.stroke()}function drawCicada(){cx.clearRect(0,0,560,500);const ax=280,ay=245,rx=142,ry=122,tx=ax+Math.cos(toyAngle)*rx,ty=ay+Math.sin(toyAngle)*ry;cx.save();cx.strokeStyle='rgba(103,213,201,.14)';cx.lineWidth=2;cx.setLineDash([8,12]);cx.beginPath();cx.ellipse(ax,ay,rx,ry,0,0,Math.PI*2);cx.stroke();cx.restore();cx.strokeStyle='#d5b16b';cx.lineWidth=4;cx.beginPath();cx.moveTo(ax,ay);cx.quadraticCurveTo((ax+tx)/2+Math.sin(toyAngle)*18,(ay+ty)/2-Math.cos(toyAngle)*18,tx,ty);cx.stroke();cx.save();cx.translate(ax,ay);cx.rotate(-.18);cx.fillStyle='#9b642e';cx.strokeStyle='#e0ad5e';cx.lineWidth=3;roundedRect(-62,-15,124,30,14);cx.fillStyle='#42c7ba';cx.beginPath();cx.arc(0,0,6,0,Math.PI*2);cx.fill();cx.restore();cx.save();cx.translate(tx,ty);cx.rotate(toyAngle+Math.PI/2);const grad=cx.createLinearGradient(-42,-62,42,62);grad.addColorStop(0,'#e7b760');grad.addColorStop(.48,'#a9682e');grad.addColorStop(1,'#4f2d17');cx.fillStyle=grad;cx.strokeStyle='#edc779';cx.lineWidth=3;roundedRect(-42,-61,84,122,25);cx.fillStyle='#24170f';cx.beginPath();cx.ellipse(0,-47,31,9,0,0,Math.PI*2);cx.fill();cx.strokeStyle='#42cfc0';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,-24);cx.lineTo(0,31);cx.stroke();cx.fillStyle='#67d9ca';cx.beginPath();cx.ellipse(0,4,13,22,0,0,Math.PI*2);cx.fill();cx.strokeStyle='#cba05b';cx.lineWidth=3;for(const side of[-1,1]){cx.beginPath();cx.moveTo(side*7,-8);cx.quadraticCurveTo(side*30,-19,side*30,9);cx.quadraticCurveTo(side*28,28,side*7,20);cx.stroke()}cx.restore()}
-function cicadaLoop(now){const dt=Math.min(.04,(now-lastFrame)/1000||.016);lastFrame=now;if(autoCicada){toySpeed+=(AUTO_SPEED-toySpeed)*Math.min(1,dt*4)}else if(!dragging)toySpeed*=Math.pow(.9,dt*60);toyAngle+=autoCicada?toySpeed*dt:0;drawCicada();const turns=Math.abs(toySpeed)/(Math.PI*2),audible=state.page==='cicada'&&turns>.5;if(cicadaGain&&audio){const t=audio.currentTime,target=audible?Math.min(.18,(turns-.5)*.075):.0001;cicadaGain.gain.setTargetAtTime(target,t,.06);cicadaOsc.frequency.setTargetAtTime(64+Math.min(110,turns*24),t,.05);cicadaFilter.frequency.setTargetAtTime(850+Math.sin(toyAngle)*320+Math.min(850,turns*180),t,.04)}if(Math.floor(now/150)!==Math.floor((now-dt*1000)/150))updateCicadaStatus();requestAnimationFrame(cicadaLoop)}requestAnimationFrame(cicadaLoop);
-fish.onclick=actFish;incense.onclick=actIncense;document.addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&['fish','incense','cicada'].includes(state.page)){e.preventDefault();if(state.page==='fish')actFish();else if(state.page==='incense')actIncense();else toggleAuto()}});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')beaconCicada()});addEventListener('pagehide',beaconCicada);addEventListener('beforeunload',()=>{flushFish();beaconCicada()});load()})();
-</script></body></html>
+<body>
+  <div class="particles" id="particles" aria-hidden="true"></div>
+  <main class="app">
+    <section class="page home active" data-page="home">
+      <div class="home-shell">
+        <header class="brand">
+          <img class="home-logo" src="/icon.png" alt="禅：打坐小僧标志"/>
+          <div><h1>禅</h1><p class="subtitle">赛博修行 · 片刻清净</p></div>
+        </header>
+
+        <nav class="menu-groups" aria-label="修行功能">
+          <section class="menu-group">
+            <h2><span>禅趣</span><small>一念一动，随喜自在</small></h2>
+            <div class="menu-grid">
+              <button class="menu-card" data-open="fish"><span class="menu-icon">◉</span><span><b>赛博木鱼</b><small>一敲一念，功德随喜</small></span></button>
+              <button class="menu-card" data-open="incense"><span class="menu-icon">♨</span><span><b>赛博烧香</b><small>敬上三炷香，静心三分钟</small></span></button>
+              <button class="menu-card featured" data-open="cicada"><span class="badges"><i class="badge pick">玄武推荐</i><i class="badge hot">热门</i></span><span class="menu-icon">⌁</span><span><b>1000万以内最好玩的竹知了</b><small>按住画圈，找回童年的“哇哇”声</small></span></button>
+              <button class="menu-card" data-open="mala"><span class="menu-icon">❍</span><span><b>赛博念珠</b><small>二十七珠，四轮百八念</small></span></button>
+            </div>
+          </section>
+
+          <section class="menu-group">
+            <h2><span>静心</span><small>一息一坐，回到此刻</small></h2>
+            <div class="menu-grid">
+              <button class="menu-card" data-open="breathing"><span class="menu-icon">✾</span><span><b>莲花呼吸</b><small>四秒吸气，六秒呼气</small></span></button>
+              <button class="menu-card" data-open="meditation"><span class="menu-icon">◯</span><span><b>入定计时</b><small>留一段安静给自己</small></span></button>
+            </div>
+          </section>
+
+          <section class="menu-group">
+            <h2><span>创作</span><small>无求无定，自在成景</small></h2>
+            <div class="menu-grid">
+              <button class="menu-card" data-open="garden"><span class="menu-icon">〰</span><span><b>数字枯山水</b><small>耙沙置石，心随纹静</small></span></button>
+              <button class="menu-card" data-open="bowl"><span class="menu-icon">◡</span><span><b>电子颂钵</b><small>轻敲绕行，听见余音</small></span></button>
+            </div>
+          </section>
+
+          <section class="menu-group record-group">
+            <h2><span>记录</span><small>只记相逢，不催赶路</small></h2>
+            <button class="menu-card record-card" data-open="stats"><span class="menu-icon">册</span><span><b>修行簿</b><small>今日、七日、累计与温和里程碑</small></span><span class="card-arrow">›</span></button>
+          </section>
+        </nav>
+
+        <button class="about-entry" data-open="about">关于“禅”</button>
+      </div>
+    </section>
+
+    <section class="page tool" data-page="fish">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博木鱼</h2><span>一敲一念 · 功德随喜</span></div><i></i></header>
+      <div class="content"><div class="visual fish" id="fish" role="button" tabindex="0" aria-label="敲木鱼"><div class="flash"></div><div class="float" id="fishFloat">功德 +1</div>
+        <svg viewBox="0 0 280 250" aria-hidden="true"><defs><radialGradient id="fishWood" cx="48%" cy="30%" r="70%"><stop stop-color="#efb66f"/><stop offset=".52" stop-color="#b96e31"/><stop offset="1" stop-color="#673518"/></radialGradient><linearGradient id="malletWood" x2="1" y2="1"><stop stop-color="#e5aa5c"/><stop offset="1" stop-color="#713a18"/></linearGradient></defs><ellipse cx="135" cy="204" rx="101" ry="18" fill="#090807" opacity=".45"/><path d="M29 165C39 73 92 25 168 31c44 3 72 29 83 67L103 124c-18 3-22 27-8 38 16 12 34 5 45-2l112-56c4 42-9 80-44 98-31 16-116 13-156-5-18-8-26-18-23-32Z" fill="url(#fishWood)" stroke="#663719" stroke-width="3" stroke-linejoin="round"/><path d="M102 124 251 98c2 7 2 12 1 18L138 160c-19 9-37 9-47-2-11-12-6-30 11-34Z" fill="#321508"/><path d="M36 160c-17 3-22 17-14 30 5 8 18 7 30 7-15-10-20-22-16-37Z" fill="#8e4c22"/><g class="mallet"><rect x="176" y="38" width="10" height="113" rx="5" fill="url(#malletWood)" transform="rotate(30 181 94)"/><ellipse cx="218" cy="44" rx="24" ry="18" fill="url(#fishWood)" transform="rotate(30 218 44)"/></g></svg>
+      </div><div class="stats"><strong class="number" id="fishCount">0</strong><div class="label">今日已敲</div><div class="status sharedDate"></div></div></div><div class="hint">点击木鱼，或按空格键</div>
+    </section>
+
+    <section class="page tool" data-page="incense">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博烧香</h2><span>三炷清香 · 三分钟静心</span></div><i></i></header>
+      <div class="content"><div class="visual incense" id="incense" role="button" tabindex="0" aria-label="点燃三炷香"><div class="flash"></div><div class="float" id="incenseFloat">清净 +1</div>
+        <svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="bronze" x2="0" y2="1"><stop stop-color="#dda753"/><stop offset=".5" stop-color="#885027"/><stop offset="1" stop-color="#3b2114"/></linearGradient></defs><g id="smokes"><path class="smoke" data-smoke="0" d="M112 78c-22-14 16-31-3-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="1" d="M140 69c22-16-14-28 5-47" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="2" d="M168 78c-20-14 15-30-4-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/></g><path d="M65 180h150l-16 49c-4 12-16 18-30 18H111c-14 0-26-6-30-18Z" fill="url(#bronze)" stroke="#d3a052" stroke-width="2"/><ellipse cx="140" cy="180" rx="76" ry="23" fill="#a66631" stroke="#e0ad5c" stroke-width="3"/><ellipse cx="140" cy="180" rx="61" ry="14" fill="#352016"/><g class="sticks"><g data-stick="0"><rect class="stick" x="108" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="108" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="1"><rect class="stick" x="136.5" y="68" width="7" height="114" rx="3.5" fill="#9b4430"/><rect class="ember" x="136.5" y="66" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="2"><rect class="stick" x="165" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="165" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g></g><path d="M64 180Q140 207 216 180L213 191Q140 216 67 191Z" fill="#92582b" stroke="#dda95a" stroke-width="2"/><circle cx="112" cy="180" r="6" fill="#6f4327"/><circle cx="140" cy="180" r="6" fill="#6f4327"/><circle cx="168" cy="180" r="6" fill="#6f4327"/><path d="M101 224h78" stroke="#d69a47" stroke-width="3" stroke-linecap="round" opacity=".55"/></svg>
+      </div><div class="stats"><strong class="number" id="incenseCount">0</strong><div class="label">今日已上香</div><div class="status" id="burnStatus">点击敬上三炷香</div></div></div><div class="hint">燃烧中再次点击，将换上新的三炷香</div>
+    </section>
+
+    <section class="page tool" data-page="cicada">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>1000万以内最好玩的竹知了</h2><span>竹声回旋 · 童趣自来</span></div><i></i></header>
+      <div class="content cicada-content"><div class="visual canvas-visual cicada-visual" id="cicadaToy" role="application" tabindex="0" aria-label="按住并画圈甩动竹知了"><canvas id="cicadaCanvas" width="560" height="500"></canvas></div><div class="inline-controls"><button class="pill-button" id="autoCicada">自动甩</button><span class="speed-bars" id="speedBars" aria-label="甩动速度"><i></i><i></i><i></i><i></i><i></i></span></div><div class="stats"><strong class="number" id="waaCount">0</strong><div class="label">今日手动哇数</div><div class="status" id="cicadaStatus">按住画圈，越快越响</div></div></div><div class="hint">鼠标或手指画圈 · 空格键切换自动甩</div>
+    </section>
+
+    <section class="page tool" data-page="mala">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博念珠</h2><span>二十七珠 · 四轮百八念</span></div><i></i></header>
+      <div class="content"><div class="visual canvas-visual mala-visual"><canvas id="malaCanvas" width="560" height="500" aria-label="点击或沿圆环拨动念珠"></canvas></div><div class="stats"><strong class="number" id="malaCount">0</strong><div class="label" id="malaRound">第一圈 · 0/27</div><div class="status" id="malaStatus">点击念珠，或按住沿圆环逐颗拨动</div></div></div><div class="hint">每二十七珠一轮 · 四轮圆满一百零八念</div>
+    </section>
+
+    <section class="page tool" data-page="breathing">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>莲花呼吸</h2><span>吸气四秒 · 呼气六秒</span></div><i></i></header>
+      <div class="content practice-content"><div class="lotus" id="breathLotus" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div><strong class="timer-number" id="breathTime">03:00</strong><div class="status" id="breathPhase">静候一息，随莲花缓缓开合</div><div class="choice-row" aria-label="呼吸时长"><button data-breath-minutes="1">1 分钟</button><button class="active" data-breath-minutes="3">3 分钟</button><button data-breath-minutes="5">5 分钟</button></div><button class="primary-button" id="breathStart">开始呼吸</button></div><div class="hint">随莲花自然呼吸，不必刻意憋气</div>
+    </section>
+
+    <section class="page tool" data-page="meditation">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>入定计时</h2><span>留白片刻 · 安住当下</span></div><i></i></header>
+      <div class="content practice-content"><div class="meditation-ring" id="meditationRing" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span><strong id="meditationTime">15:00</strong></div><div class="status" id="meditationStatus">一段留白，也是一种修行</div><div class="choice-row compact" aria-label="入定时长"><button data-meditation-minutes="5">5</button><button class="active" data-meditation-minutes="15">15</button><button data-meditation-minutes="25">25</button><button data-meditation-minutes="45">45 分</button></div><div class="inline-controls"><button class="primary-button" id="meditationStart">开始入定</button><button class="pill-button" id="ambientToggle" aria-pressed="false">棕噪音</button></div></div><div class="hint">计时会在应用关闭后继续 · 可随时结束</div>
+    </section>
+
+    <section class="page tool wide-tool" data-page="garden">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>数字枯山水</h2><span>耙沙置石 · 心随纹静</span></div><i></i></header>
+      <div class="content garden-content"><canvas class="garden-canvas" id="gardenCanvas" width="720" height="480" aria-label="数字枯山水画布"></canvas><div class="toolbar"><button class="active" id="gardenRake">耙沙</button><button id="gardenStone">置石</button><button id="gardenUndo">撤销</button><button id="gardenClear">清空</button><button id="gardenSave">保存</button><button id="gardenExport">导出 PNG</button></div><div class="status" id="gardenStatus">指尖轻划，耙出沙纹</div></div>
+    </section>
+
+    <section class="page tool" data-page="bowl">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>电子颂钵</h2><span>一声入耳 · 余音入心</span></div><i></i></header>
+      <div class="content"><div class="visual canvas-visual bowl-visual"><canvas class="bowl-canvas" id="bowlCanvas" width="560" height="460" aria-label="轻敲或沿钵缘绕行"></canvas></div><div class="stats"><strong class="number" id="bowlCount">0</strong><div class="label">今日钵音</div><div class="status" id="bowlStatus">轻敲听音，或按住沿钵缘缓缓绕行</div></div></div><div class="hint">声音由设备实时合成 · 切换页面即停止</div>
+    </section>
+
+    <section class="page tool scroll-page" data-page="stats">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>修行簿</h2><span>只记相逢 · 不催赶路</span></div><button class="refresh-button" id="statsRefresh" aria-label="刷新记录">↻</button></header>
+      <div class="stats-book"><section><h3>今日</h3><div id="statsToday"></div></section><section><h3>最近七日</h3><div id="statsWeek"></div></section><section><h3>累计</h3><div id="statsTotals"></div></section><section><h3>温和里程碑</h3><div id="statsMilestones"></div></section></div>
+    </section>
+
+    <section class="page tool scroll-page" data-page="about">
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>关于“禅”</h2><span>赛博修行 · 片刻清净</span></div><i></i></header>
+      <div class="content about-content"><img class="about-logo" src="/icon.png" alt="禅应用图标"/><div class="about-card"><div class="about-row"><span>应用</span><b>禅</b></div><div class="about-row"><span>版本</span><b>1.0.1</b></div><div class="about-row"><span>作者</span><a href="https://github.com/jiongjiongJOJO" target="_blank" rel="noopener noreferrer">囧囧JOJO</a></div><div class="about-row"><span>GitHub</span><a href="https://github.com/FNOSP/cyber-zen" target="_blank" rel="noopener noreferrer">FNOSP/cyber-zen</a></div></div><p class="about-desc">赛博修行，片刻清净。<br/>九种禅趣、静心、创作与记录体验，愿每次相逢都带来一点轻松自在。</p></div>
+    </section>
+  </main>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
