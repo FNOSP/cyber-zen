@@ -22,7 +22,7 @@
             <h2><span>禅趣</span><small>一念一动，随喜自在</small></h2>
             <div class="menu-grid">
               <button class="menu-card" data-open="fish"><span class="menu-icon">◉</span><span><b>赛博木鱼</b><small>一敲一念，功德随喜</small></span></button>
-              <button class="menu-card" data-open="incense"><span class="menu-icon">♨</span><span><b>赛博烧香</b><small>敬上三炷香，静心三分钟</small></span></button>
+              <button class="menu-card" data-open="incense"><span class="menu-icon">♨</span><span><b>赛博烧香</b><small>点燃三炷香，静心三分钟</small></span></button>
               <button class="menu-card featured" data-open="cicada"><span class="badges"><i class="badge pick">玄武推荐</i><i class="badge hot">热门</i></span><span class="menu-icon">⌁</span><span><b>1000万以内最好玩的竹知了</b><small>按住画圈，找回童年的“哇哇”声</small></span></button>
               <button class="menu-card" data-open="mala"><span class="menu-icon">❍</span><span><b>赛博念珠</b><small>二十七珠，四轮百八念</small></span></button>
             </div>
@@ -46,7 +46,7 @@
 
           <section class="menu-group record-group">
             <h2><span>记录</span><small>只记相逢，不催赶路</small></h2>
-            <button class="menu-card record-card" data-open="stats"><span class="menu-icon">册</span><span><b>修行簿</b><small>今日、七日、累计与温和里程碑</small></span><span class="card-arrow">›</span></button>
+            <button class="menu-card record-card" data-open="stats"><span class="menu-icon">册</span><span><b>修行簿</b><small>今日、七日、累计与成就</small></span><span class="card-arrow">›</span></button>
           </section>
         </nav>
 
@@ -65,12 +65,12 @@
       <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>赛博烧香</h2><span>三炷清香 · 三分钟静心</span></div><i></i></header>
       <div class="content"><div class="visual incense" id="incense" role="button" tabindex="0" aria-label="点燃三炷香"><div class="flash"></div><div class="float" id="incenseFloat">清净 +1</div>
         <svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="bronze" x2="0" y2="1"><stop stop-color="#dda753"/><stop offset=".5" stop-color="#885027"/><stop offset="1" stop-color="#3b2114"/></linearGradient></defs><g id="smokes"><path class="smoke" data-smoke="0" d="M112 78c-22-14 16-31-3-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="1" d="M140 69c22-16-14-28 5-47" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/><path class="smoke" data-smoke="2" d="M168 78c-20-14 15-30-4-48" fill="none" stroke="#d8f3ec" stroke-width="3" stroke-linecap="round"/></g><path d="M65 180h150l-16 49c-4 12-16 18-30 18H111c-14 0-26-6-30-18Z" fill="url(#bronze)" stroke="#d3a052" stroke-width="2"/><ellipse cx="140" cy="180" rx="76" ry="23" fill="#a66631" stroke="#e0ad5c" stroke-width="3"/><ellipse cx="140" cy="180" rx="61" ry="14" fill="#352016"/><g class="sticks"><g data-stick="0"><rect class="stick" x="108" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="108" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="1"><rect class="stick" x="136.5" y="68" width="7" height="114" rx="3.5" fill="#9b4430"/><rect class="ember" x="136.5" y="66" width="7" height="7" rx="3.5" fill="#ff7540"/></g><g data-stick="2"><rect class="stick" x="165" y="77" width="7" height="105" rx="3.5" fill="#8f3e2d"/><rect class="ember" x="165" y="75" width="7" height="7" rx="3.5" fill="#ff7540"/></g></g><path d="M64 180Q140 207 216 180L213 191Q140 216 67 191Z" fill="#92582b" stroke="#dda95a" stroke-width="2"/><circle cx="112" cy="180" r="6" fill="#6f4327"/><circle cx="140" cy="180" r="6" fill="#6f4327"/><circle cx="168" cy="180" r="6" fill="#6f4327"/><path d="M101 224h78" stroke="#d69a47" stroke-width="3" stroke-linecap="round" opacity=".55"/></svg>
-      </div><div class="stats"><strong class="number" id="incenseCount">0</strong><div class="label">今日已上香</div><div class="status" id="burnStatus">点击敬上三炷香</div></div></div><div class="hint">燃烧中再次点击，将换上新的三炷香</div>
+      </div><div class="stats"><strong class="number" id="incenseCount">0</strong><div class="label">今日已上香</div><div class="status" id="burnStatus">点击点燃三炷香</div></div></div><div class="hint">燃烧中再次点击，将换上新的三炷香</div>
     </section>
 
     <section class="page tool" data-page="cicada">
       <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>1000万以内最好玩的竹知了</h2><span>竹声回旋 · 童趣自来</span></div><i></i></header>
-      <div class="content cicada-content"><div class="visual canvas-visual cicada-visual" id="cicadaToy" role="application" tabindex="0" aria-label="按住并画圈甩动竹知了"><canvas id="cicadaCanvas" width="560" height="500"></canvas></div><div class="inline-controls"><button class="pill-button" id="autoCicada">自动甩</button><span class="speed-bars" id="speedBars" aria-label="甩动速度"><i></i><i></i><i></i><i></i><i></i></span></div><div class="stats"><strong class="number" id="waaCount">0</strong><div class="label">今日手动哇数</div><div class="status" id="cicadaStatus">按住画圈，越快越响</div></div></div><div class="hint">鼠标或手指画圈 · 空格键切换自动甩</div>
+      <div class="content cicada-content"><div class="visual canvas-visual cicada-visual" id="cicadaToy" role="application" tabindex="0" aria-label="按住并画圈甩动竹知了"><canvas id="cicadaCanvas" width="560" height="500"></canvas></div><div class="inline-controls"><button class="pill-button" id="autoCicada">自动甩</button><button class="pill-button sensor-button" id="sensorCicada" type="button" aria-pressed="false">开启晃动</button><span class="speed-bars" id="speedBars" aria-label="甩动速度"><i></i><i></i><i></i><i></i><i></i></span></div><div class="stats"><strong class="number" id="waaCount">0</strong><div class="label">今日手动哇数</div><div class="status" id="cicadaStatus">按住画圈，越快越响</div></div></div><div class="hint">鼠标或手指画圈 · 手机可开启晃动 · 空格键切换自动甩</div>
     </section>
 
     <section class="page tool" data-page="mala">
@@ -99,8 +99,8 @@
     </section>
 
     <section class="page tool scroll-page" data-page="stats">
-      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>修行簿</h2><span>只记相逢 · 不催赶路</span></div><button class="refresh-button" id="statsRefresh" aria-label="刷新记录">↻</button></header>
-      <div class="stats-book"><section><h3>今日</h3><div id="statsToday"></div></section><section><h3>最近七日</h3><div id="statsWeek"></div></section><section><h3>累计</h3><div id="statsTotals"></div></section><section><h3>温和里程碑</h3><div id="statsMilestones"></div></section></div>
+      <header class="tool-head"><button class="back" aria-label="返回菜单">‹</button><div class="tool-title"><h2>修行簿</h2><span>成就与修行记录</span></div><button class="refresh-button" id="statsRefresh" aria-label="刷新记录">↻</button></header>
+      <div class="stats-book"><section><h3>今日</h3><div id="statsToday"></div></section><section><h3>最近七日</h3><div id="statsWeek"></div></section><section><h3>累计</h3><div id="statsTotals"></div></section><section class="achievement-section"><div class="section-heading"><h3>成就</h3><span id="statsAchievementSummary">0 项已解锁</span></div><div id="statsMilestones"></div></section></div>
     </section>
 
     <section class="page tool scroll-page" data-page="about">
