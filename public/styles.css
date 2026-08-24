@@ -24,4 +24,16 @@
 @media(max-width:560px){.achievement-group .milestone-list{grid-template-columns:minmax(0,1fr)}}
 /* Keep short mobile tool pages within the viewport so their bottom hint stays visible. */
 @media(max-width:680px),(max-height:500px){.tool:not(.scroll-page) .content{flex:1 1 auto;min-height:0}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+/* Keep direct interaction feedback visible in fnOS browsers that report a
+   reduced-motion preference; only ambient motion is removed. */
+@media(prefers-reduced-motion:reduce){
+  .particle{animation:none}
+  .page{transition:none}
+  .fish.hit svg{animation:knock .18s ease-out}
+  .fish.hit .mallet{animation:strike .18s cubic-bezier(.2,.8,.3,1)}
+  .hit .flash,.relit .flash{animation:flash .35s ease-out}
+  .hit .float,.relit .float{animation:floatText .45s ease-out}
+  .number.pop{animation:pop .15s ease-out}
+  .incense.burning .smoke{animation:smoke 1.4s linear infinite}
+  .incense.burning .ember{animation:flicker .2s ease-in-out infinite alternate}
+}

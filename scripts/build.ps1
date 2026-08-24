@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # 远程服务器配置
-$SshHost = "172.31.110.56"
+$SshHost = "192.168.101.249"
 $SshPort = 22
 $SshUser = "admin"
 $SshPassword = "adminadmin1"

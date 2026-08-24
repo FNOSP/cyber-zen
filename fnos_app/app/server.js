@@ -653,10 +653,12 @@ async function handleRequest(req, res) {
   const contentType = MIME[ext] || "application/octet-stream";
   try {
     const content = await fs.promises.readFile(filePath);
-    res.writeHead(200, { "Content-Type": contentType });
+    // The app serves versioned-in-place assets; avoid a stale fnOS WebView
+    // keeping an older CSS/JS file after an application upgrade.
+    res.writeHead(200, { "Content-Type": contentType, "Cache-Control": "no-store" });
     res.end(content);
   } catch {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
     res.end("404 Not Found");
   }
 }

@@ -153,14 +153,14 @@ npx electron-builder --mac --arm64 --publish never
 └─ releases/             版本发布记录
 ```
 
-## CI / Release
+## CI / Pre-release
 
 GitHub Actions 位于 [`.github/workflows/release.yml`](.github/workflows/release.yml)：
 
-- 推送 `v*` 标签时自动构建 Windows、Linux、macOS 和 fnOS 产物。
+- 推送 `v*` 标签时自动构建 Windows、Linux、macOS 和 fnOS 产物，并创建 GitHub Pre-release。
 - 也可以在 Actions 页面手动运行，并填写发布标签。
 - 构建前会执行 `npm ci` 和 `npm test`。
-- 发布资产会上传到 GitHub Release。
+- 构建资产会上传到 GitHub Pre-release，不会创建正式 Release。
 
 例如：
 

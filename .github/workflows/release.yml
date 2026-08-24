@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Pre-release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "发布标签，例如 v1.0.1"
+        description: "预发布标签，例如 v1.0.1"
         required: true
         default: "v1.0.1"
         type: string
@@ -92,7 +92,7 @@ jobs:
           retention-days: 7
 
   release:
-    name: Publish GitHub Release
+    name: Publish GitHub Pre-release
     needs: [desktop, fnos]
     runs-on: ubuntu-latest
     steps:
@@ -132,12 +132,13 @@ jobs:
             echo '- 飞牛 fnOS：下载 `.fpk` 手动安装'
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-      - name: Create release and upload packages
+      - name: Create pre-release and upload packages
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: 禅 ${{ env.RELEASE_TAG }}
           body: ${{ steps.notes.outputs.body }}
           draft: false
-          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
+          # Every CI build is a pre-release while the application is in testing.
+          prerelease: true
           files: release-assets/*
