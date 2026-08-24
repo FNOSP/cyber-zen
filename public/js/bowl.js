@@ -3,6 +3,14 @@ import { $, api, createRequestId, getAudioContext } from "./shared.js";
 let initialized = false;
 
 const TAU = Math.PI * 2;
+// Keep hit testing aligned with the ellipse drawn in draw().  The pixel
+// margin lets a finger travel comfortably inside/outside the visible rim.
+const RIM_CENTER_X = 0.5;
+const RIM_CENTER_Y = 0.42;
+const RIM_RADIUS_X = 0.33;
+const RIM_RADIUS_Y = 0.12;
+const RIM_TOUCH_MARGIN_PX = 48;
+const RIM_GRACE_MS = 110;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 function getMetric(source, ...keys) {
@@ -30,6 +38,7 @@ export function initBowl() {
   let pointerId = null;
   let lastAngle = 0;
   let lastMoveAt = 0;
+  let lastRimHitAt = 0;
   let angularSpeed = 0;
   let rimAudio = null;
   let retryTimer = 0;
@@ -69,7 +78,7 @@ export function initBowl() {
       context.shadowColor = "#5be0d0";
       context.shadowBlur = 24 * glow;
       context.beginPath();
-      context.ellipse(centerX, centerY - height * 0.09, width * (0.33 + glow * 0.025), height * (0.12 + glow * 0.012), 0, 0, TAU);
+      context.ellipse(centerX, centerY - height * 0.09, width * (RIM_RADIUS_X + glow * 0.025), height * (RIM_RADIUS_Y + glow * 0.012), 0, 0, TAU);
       context.stroke();
       context.restore();
     }
@@ -124,7 +133,7 @@ export function initBowl() {
     context.strokeStyle = "#e4bf69";
     context.lineWidth = 7;
     context.beginPath();
-    context.ellipse(centerX, centerY - height * 0.1, width * 0.33, height * 0.12, 0, 0, TAU);
+    context.ellipse(centerX, centerY - height * 0.1, width * RIM_RADIUS_X, height * RIM_RADIUS_Y, 0, 0, TAU);
     context.fill();
     context.stroke();
 
@@ -256,11 +265,22 @@ export function initBowl() {
 
   function locationFromEvent(event) {
     const bounds = canvas.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / Math.max(1, bounds.width);
-    const y = (event.clientY - bounds.top) / Math.max(1, bounds.height);
+    const width = Math.max(1, bounds.width);
+    const height = Math.max(1, bounds.height);
+    const x = (event.clientX - bounds.left) / width;
+    const y = (event.clientY - bounds.top) / height;
+    const normalizedX = (x - RIM_CENTER_X) / RIM_RADIUS_X;
+    const normalizedY = (y - RIM_CENTER_Y) / RIM_RADIUS_Y;
+    const angle = Math.atan2(normalizedY, normalizedX);
+    const rimX = width * (RIM_CENTER_X + Math.cos(angle) * RIM_RADIUS_X);
+    const rimY = height * (RIM_CENTER_Y + Math.sin(angle) * RIM_RADIUS_Y);
+    const pointerX = x * width;
+    const pointerY = y * height;
+    const touchMargin = Math.min(RIM_TOUCH_MARGIN_PX, Math.min(width, height) * 0.22);
     return {
-      angle: Math.atan2((y - 0.42) / 0.24, (x - 0.5) / 0.34),
-      rimDistance: Math.abs(Math.hypot((x - 0.5) / 0.34, (y - 0.42) / 0.24) - 1),
+      angle,
+      rimDistance: Math.hypot(pointerX - rimX, pointerY - rimY),
+      touchMargin,
     };
   }
 
@@ -345,7 +365,8 @@ export function initBowl() {
     lastMoveAt = now;
     angularSpeed = angularSpeed * 0.68 + (Math.abs(delta) / elapsed) * 0.32;
 
-    if (location.rimDistance < 0.42 && angularSpeed > 0.35) {
+    if (location.rimDistance <= location.touchMargin && angularSpeed > 0.35) {
+      lastRimHitAt = now;
       const sound = startRimAudio();
       if (sound) {
         const strength = clamp((angularSpeed - 0.25) / 6.5, 0, 1);
@@ -359,7 +380,7 @@ export function initBowl() {
         setStatus(strength > 0.66 ? "钵音充盈 · 慢慢绕行" : "沿钵缘继续绕行");
         requestDraw();
       }
-    } else if (rimAudio) {
+    } else if (rimAudio && now - lastRimHitAt > RIM_GRACE_MS) {
       rimAudio.gain.gain.setTargetAtTime(0.0001, rimAudio.audio.currentTime, 0.06);
     }
     event.preventDefault();

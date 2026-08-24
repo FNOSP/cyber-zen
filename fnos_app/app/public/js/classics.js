@@ -2,6 +2,22 @@ import { $, $$, api, getAudioContext, animate, pop, todayKey } from "./shared.js
 
 const BURN_MS = 180000;
 const AUTO_SPEED = 19;
+const SENSOR_MAX_SPEED = 14;
+const SENSOR_STALE_MS = 320;
+const SENSOR_BASELINE_ALPHA = 0.02;
+const SENSOR_DYNAMIC_ALPHA = 0.35;
+const SENSOR_SPEED_ALPHA = 0.22;
+const SENSOR_ACCEL_DEADZONE = 0.45;
+const SENSOR_ACCEL_MULTIPLIER = 2.2;
+const SENSOR_ACCEL_WEIGHT_RANGE = 1.5;
+const SENSOR_LINEAR_GATE = 1;
+const SENSOR_LINEAR_THRESHOLD = 0.9;
+const SENSOR_LINEAR_MULTIPLIER = 0.7;
+const SENSOR_ROTATION_THRESHOLD = 25;
+const SENSOR_ROTATION_MULTIPLIER = 0.7;
+const SENSOR_ORIENTATION_FALLBACK_MS = 400;
+const SENSOR_ORIENTATION_THRESHOLD = 0.7;
+const SENSOR_ORIENTATION_MULTIPLIER = 0.9;
 const TAU = Math.PI * 2;
 const INCENSE_END_KEY = "zen-incense-end";
 
@@ -21,7 +37,7 @@ export async function initClassics() {
   const canvas = $("#cicadaCanvas");
   const waaCount = $("#waaCount");
   const autoButton = $("#autoCicada");
-  const sensorButton = $("#sensorCicada");
+  const cicadaEntry = $('[data-open="cicada"]');
   const cicadaStatus = $("#cicadaStatus");
   if (
     !fish || !incense || !fishCount || !incenseCount || !fishFloat || !incenseFloat
@@ -224,16 +240,19 @@ export async function initClassics() {
   let lastPointerAngle = 0;
   let manualArc = 0;
   let autoCicada = false;
-  let sensorCicada = false;
   let sensorListening = false;
+  let sensorPermission = "unknown";
   let sensorSource = "";
   let sensorSpeed = 0;
   let sensorLastAt = 0;
-  let sensorLastAcceleration = null;
+  let sensorLastUsefulMotionAt = 0;
+  let sensorLastSampleAt = 0;
+  let sensorLastOrientationSampleAt = 0;
+  let sensorGravityBaseline = null;
+  let sensorDynamicX = 0;
+  let sensorDynamicY = 0;
+  let sensorPreviousDirection = null;
   let sensorLastOrientation = null;
-  let sensorEventSeen = false;
-  let sensorRequestId = 0;
-  let sensorProbeTimer = 0;
   let sensorNotice = "";
   let sensorNoticeUntil = 0;
   let cicadaOscillator;
@@ -283,7 +302,7 @@ export async function initClassics() {
       cicadaOscillator.frequency.value = 72;
       cicadaFilter.type = "bandpass";
       cicadaFilter.frequency.value = 980;
-      cicadaFilter.Q.value = 2.8;
+      cicadaFilter.Q.value = 1.6;
       cicadaGain.gain.value = 0.0001;
       cicadaOscillator.connect(cicadaFilter).connect(cicadaGain).connect(audioContext.destination);
       cicadaOscillator.start();
@@ -324,37 +343,29 @@ export async function initClassics() {
       || typeof window.DeviceOrientationEvent !== "undefined");
   }
 
+  function permissionClasses() {
+    return [window.DeviceMotionEvent, window.DeviceOrientationEvent]
+      .filter((EventClass) => typeof EventClass?.requestPermission === "function");
+  }
+
   function sensorControlRelevant() {
     return Number(navigator.maxTouchPoints || 0) > 0
       || window.matchMedia?.("(pointer: coarse)")?.matches === true;
   }
 
-  function updateSensorButton() {
-    if (!sensorButton) return;
-    const relevant = sensorControlRelevant();
-    sensorButton.hidden = !relevant;
-    if (!relevant) return;
-    const available = sensorAvailable();
-    sensorButton.disabled = !available;
-    sensorButton.classList.toggle("active", sensorCicada);
-    sensorButton.setAttribute("aria-pressed", String(sensorCicada));
-    sensorButton.textContent = sensorCicada
-      ? "关闭晃动"
-      : available
-        ? "开启晃动"
-        : window.isSecureContext === false
-          ? "需要 HTTPS"
-          : "设备不支持";
-    sensorButton.title = !available && window.isSecureContext === false
-      ? "手机浏览器通常只会在 HTTPS 页面开放动作传感器"
-      : "";
-  }
-
-  function resetSensorSamples() {
+  function resetSensorMotion() {
+    sensorSpeed = 0;
     sensorLastAt = 0;
-    sensorLastAcceleration = null;
+    sensorLastUsefulMotionAt = 0;
+    sensorLastSampleAt = 0;
+    sensorLastOrientationSampleAt = 0;
+    sensorGravityBaseline = null;
+    sensorDynamicX = 0;
+    sensorDynamicY = 0;
+    sensorPreviousDirection = null;
     sensorLastOrientation = null;
     sensorSource = "";
+    manualArc = 0;
   }
 
   function showSensorNotice(message, duration = 3500) {
@@ -363,34 +374,26 @@ export async function initClassics() {
     updateCicadaStatus();
   }
 
-  function markSensorEvent() {
-    sensorEventSeen = true;
-    window.clearTimeout(sensorProbeTimer);
-    sensorProbeTimer = 0;
-  }
-
   function detachSensorListeners() {
     if (typeof window.removeEventListener === "function") {
       window.removeEventListener("devicemotion", handleDeviceMotion);
       window.removeEventListener("deviceorientation", handleDeviceOrientation);
     }
-    window.clearTimeout(sensorProbeTimer);
-    sensorProbeTimer = 0;
     sensorListening = false;
   }
 
-  function stopSensor() {
-    sensorRequestId += 1;
-    sensorCicada = false;
-    detachSensorListeners();
-    sensorSpeed = 0;
-    resetSensorSamples();
-    updateSensorButton();
-    updateCicadaStatus();
+  function attachSensorListeners() {
+    if (sensorListening || typeof window.addEventListener !== "function") return;
+    window.addEventListener("devicemotion", handleDeviceMotion, { passive: true });
+    window.addEventListener("deviceorientation", handleDeviceOrientation, { passive: true });
+    sensorListening = true;
   }
 
-  function clampSensorSpeed(value) {
-    return Math.max(-24, Math.min(24, value));
+  function armSensorWithoutPrompt() {
+    if (!sensorAvailable()) return;
+    if (permissionClasses().length) return;
+    sensorPermission = "granted";
+    attachSensorListeners();
   }
 
   function finiteSensorValue(value) {
@@ -399,73 +402,100 @@ export async function initClassics() {
     return Number.isFinite(number) ? number : null;
   }
 
-  function dominantAxis(values) {
-    return values.reduce((current, value) => (
-      Math.abs(value) > Math.abs(current) ? value : current
-    ), 0);
+  function maxAbs(values) {
+    return values.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0);
+  }
+
+  function updateSensorTarget(target, source, now = performance.now()) {
+    const next = Math.min(SENSOR_MAX_SPEED, Math.max(0, Number(target) || 0));
+    sensorSpeed += (next - sensorSpeed) * SENSOR_SPEED_ALPHA;
+    if (sensorSpeed < 0.001) sensorSpeed = 0;
+    if (next > 0) {
+      sensorLastAt = now;
+      sensorSource = source;
+      ensureCicadaAudio();
+    }
+    updateCicadaStatus();
   }
 
   function handleDeviceMotion(event) {
-    if (!sensorCicada || state.page !== "cicada") return;
+    if (document.visibilityState === "hidden" || state.page !== "cicada" || autoCicada || dragging) return;
     const now = performance.now();
-    let velocity = 0;
-    const rates = event.rotationRate;
-    if (rates) {
-      const rateValues = [rates.alpha, rates.beta, rates.gamma].map(finiteSensorValue);
-      if (rateValues.every((value) => value !== null)) {
-        markSensorEvent();
-        const dominant = dominantAxis(rateValues);
-        if (Math.abs(dominant) > 0.8) {
-          // rotationRate is expressed in degrees per second; convert to the
-          // canvas' radians per second and add a little tactile sensitivity.
-          velocity = clampSensorSpeed(dominant * Math.PI / 180 * 1.25);
-          sensorSource = "motion";
-        }
-      }
-    }
+    if (now - sensorLastSampleAt < 14) return;
+    sensorLastSampleAt = now;
+    let phaseTarget = 0;
+    let linearTarget = 0;
+    let rotationTarget = 0;
 
-    if (!velocity) {
-      const acceleration = event.acceleration;
-      const accelerationValues = acceleration
-        ? [acceleration.x, acceleration.y, acceleration.z].map(finiteSensorValue)
-        : [];
-      if (accelerationValues.length === 3 && accelerationValues.every((value) => value !== null)) {
-        markSensorEvent();
-        const magnitude = Math.hypot(...accelerationValues);
-        if (magnitude > 0.35) {
-          velocity = clampSensorSpeed(dominantAxis(accelerationValues) * 1.35);
-          sensorSource = "motion";
-        }
+    const gravity = event.accelerationIncludingGravity;
+    const x = finiteSensorValue(gravity?.x);
+    const y = finiteSensorValue(gravity?.y);
+    if (x !== null && y !== null) {
+      if (!sensorGravityBaseline) {
+        sensorGravityBaseline = { x, y };
+        sensorDynamicX = 0;
+        sensorDynamicY = 0;
+        sensorPreviousDirection = null;
       } else {
-        // A few browsers expose only accelerationIncludingGravity. Comparing
-        // consecutive samples removes the static gravity component and keeps
-        // a gentle shake useful as a fallback.
-        const includingGravity = event.accelerationIncludingGravity;
-        const values = includingGravity
-          ? [includingGravity.x, includingGravity.y, includingGravity.z].map(finiteSensorValue)
-          : [];
-        if (values.length === 3 && values.every((value) => value !== null)) {
-          markSensorEvent();
-          if (sensorLastAcceleration) {
-            const delta = values.map((value, index) => value - sensorLastAcceleration[index]);
-            const magnitude = Math.hypot(...delta);
-            if (magnitude > 0.55) {
-              velocity = clampSensorSpeed(dominantAxis(delta) * 1.6);
-              sensorSource = "motion";
-            }
+        sensorGravityBaseline.x += (x - sensorGravityBaseline.x) * SENSOR_BASELINE_ALPHA;
+        sensorGravityBaseline.y += (y - sensorGravityBaseline.y) * SENSOR_BASELINE_ALPHA;
+        const dynamicX = x - sensorGravityBaseline.x;
+        const dynamicY = y - sensorGravityBaseline.y;
+        sensorDynamicX += (dynamicX - sensorDynamicX) * SENSOR_DYNAMIC_ALPHA;
+        sensorDynamicY += (dynamicY - sensorDynamicY) * SENSOR_DYNAMIC_ALPHA;
+        const energy = Math.hypot(sensorDynamicX, sensorDynamicY);
+        if (energy <= SENSOR_ACCEL_DEADZONE) {
+          sensorPreviousDirection = null;
+        } else {
+          const direction = {
+            x: sensorDynamicX / energy,
+            y: sensorDynamicY / energy,
+            at: now,
+          };
+          const previousDirection = sensorPreviousDirection;
+          sensorPreviousDirection = direction;
+          if (previousDirection) {
+            const elapsed = Math.max(0.014, (now - previousDirection.at) / 1000);
+            const cross = previousDirection.x * direction.y - previousDirection.y * direction.x;
+            // asin(cross) intentionally ignores a pure 180° reversal: a
+            // straight shake must not be misread as half a turn.
+            const angleDelta = Math.abs(Math.asin(Math.max(-1, Math.min(1, cross))));
+            const angularSpeed = angleDelta / elapsed;
+            const weight = Math.min(1, (energy - SENSOR_ACCEL_DEADZONE) / SENSOR_ACCEL_WEIGHT_RANGE);
+            phaseTarget = angularSpeed * SENSOR_ACCEL_MULTIPLIER * weight;
           }
-          sensorLastAcceleration = values;
+
+          // A forceful straight shake has little phase rotation. Keep a
+          // deliberately high-threshold, low-gain fallback so it still feels
+          // responsive without turning ordinary linear jitter into high speed.
+          if (energy >= SENSOR_LINEAR_GATE && phaseTarget < 0.75) {
+            linearTarget = Math.max(0, energy - SENSOR_LINEAR_THRESHOLD)
+              * SENSOR_LINEAR_MULTIPLIER;
+          }
         }
       }
     }
 
-    if (velocity) {
-      sensorSpeed = sensorSpeed * 0.62 + velocity * 0.38;
-      sensorLastAt = now;
-    } else if (!sensorLastAt) {
-      sensorLastAt = now;
+    // rotationRate is evaluated on every DeviceMotion event and merged with
+    // the filtered acceleration target instead of being skipped when gravity
+    // data is available.
+    const rates = event.rotationRate;
+    const rateValues = rates
+      ? [rates.alpha, rates.beta, rates.gamma].map(finiteSensorValue)
+      : [];
+    if (rateValues.length === 3 && rateValues.every((value) => value !== null)) {
+      const rotationRate = maxAbs(rateValues);
+      rotationTarget = Math.max(0, rotationRate - SENSOR_ROTATION_THRESHOLD)
+        * Math.PI / 180 * SENSOR_ROTATION_MULTIPLIER;
     }
-    updateCicadaStatus();
+
+    const motionTarget = Math.max(phaseTarget, linearTarget);
+    const target = Math.max(motionTarget, rotationTarget);
+    if (target > 0) sensorLastUsefulMotionAt = now;
+    const source = motionTarget >= rotationTarget ? "motion" : "rotation";
+    // Do not let zero-valued DeviceMotion samples repeatedly damp an active
+    // orientation fallback; its own stale timer handles the decay.
+    if (target > 0 || sensorSource !== "orientation") updateSensorTarget(target, source, now);
   }
 
   function orientationDelta(next, previous, wraps) {
@@ -477,39 +507,35 @@ export async function initClassics() {
   }
 
   function handleDeviceOrientation(event) {
-    if (!sensorCicada || state.page !== "cicada") return;
+    if (document.visibilityState === "hidden" || state.page !== "cicada" || autoCicada || dragging) return;
     const now = performance.now();
+    if (now - sensorLastUsefulMotionAt < SENSOR_ORIENTATION_FALLBACK_MS) return;
+    if (now - sensorLastOrientationSampleAt < 40) return;
+    sensorLastOrientationSampleAt = now;
     const values = {
       alpha: finiteSensorValue(event.alpha),
       beta: finiteSensorValue(event.beta),
       gamma: finiteSensorValue(event.gamma),
     };
     if (Object.values(values).every((value) => value === null)) return;
-    markSensorEvent();
     const previous = sensorLastOrientation;
     sensorLastOrientation = { values, at: now };
-    // DeviceMotion is preferred when it is available; orientation is a
-    // fallback for browsers that omit rotationRate.
-    if (sensorSource === "motion" && now - sensorLastAt < 250) return;
     if (!previous) return;
     const elapsed = Math.max(0.016, (now - previous.at) / 1000);
     const deltas = Object.entries(values)
       .filter(([axis, value]) => value !== null && previous.values[axis] !== null)
       .map(([axis, value]) => orientationDelta(value, previous.values[axis], axis === "alpha"));
     if (!deltas.length) return;
-    const delta = dominantAxis(deltas);
-    if (Math.abs(delta) < 0.25) return;
-    sensorSpeed = sensorSpeed * 0.58 + clampSensorSpeed(delta * Math.PI / 180 / elapsed * 1.2) * 0.42;
-    sensorSource = "orientation";
-    sensorLastAt = now;
-    updateCicadaStatus();
+    const angularSpeed = maxAbs(deltas) * Math.PI / 180 / elapsed;
+    const target = Math.max(0, angularSpeed - SENSOR_ORIENTATION_THRESHOLD)
+      * SENSOR_ORIENTATION_MULTIPLIER;
+    updateSensorTarget(target, "orientation", now);
   }
 
   async function requestSensorPermission() {
-    const permissionClasses = [window.DeviceMotionEvent, window.DeviceOrientationEvent]
-      .filter((EventClass) => typeof EventClass?.requestPermission === "function");
-    if (!permissionClasses.length) return true;
-    const results = await Promise.all(permissionClasses.map(async (EventClass) => {
+    const classes = permissionClasses();
+    if (!classes.length) return true;
+    const results = await Promise.all(classes.map(async (EventClass) => {
       try {
         return await EventClass.requestPermission();
       } catch {
@@ -519,60 +545,40 @@ export async function initClassics() {
     return results.some((result) => result === "granted");
   }
 
-  async function toggleSensor() {
-    if (sensorCicada) {
-      stopSensor();
-      return;
-    }
+  async function armSensorFromGesture() {
+    ensureCicadaAudio();
     if (!sensorAvailable()) {
-      updateSensorButton();
-      showSensorNotice(
-        window.isSecureContext === false
-          ? "手机晃动控制需要通过 HTTPS 打开"
-          : "当前设备不支持晃动控制 · 可用鼠标或手指画圈",
-      );
+      if (sensorControlRelevant() && window.isSecureContext === false) {
+        showSensorNotice("手机晃动控制需要通过 HTTPS 打开", 5000);
+      }
       return;
     }
-    setAuto(false);
-    const requestId = ++sensorRequestId;
-    if (sensorButton) sensorButton.disabled = true;
+    if (sensorPermission === "granted") {
+      if (state.page === "cicada") attachSensorListeners();
+      return;
+    }
+    if (sensorPermission === "requesting" || sensorPermission === "denied") return;
+    if (!permissionClasses().length) {
+      sensorPermission = "granted";
+      if (state.page === "cicada") attachSensorListeners();
+      return;
+    }
+
+    sensorPermission = "requesting";
     const permitted = await requestSensorPermission();
-    if (requestId !== sensorRequestId || state.page !== "cicada") {
-      updateSensorButton();
-      return;
-    }
     if (!permitted) {
-      updateSensorButton();
+      sensorPermission = "denied";
       showSensorNotice("未获得传感器权限 · 可用鼠标或手指画圈");
       return;
     }
-
-    resetSensorSamples();
+    sensorPermission = "granted";
     sensorNotice = "";
     sensorNoticeUntil = 0;
-    sensorEventSeen = false;
-    sensorCicada = true;
-    if (!sensorListening && typeof window.addEventListener === "function") {
-      window.addEventListener("devicemotion", handleDeviceMotion, { passive: true });
-      window.addEventListener("deviceorientation", handleDeviceOrientation, { passive: true });
-      sensorListening = true;
-    }
-    sensorProbeTimer = window.setTimeout(() => {
-      if (!sensorCicada || sensorEventSeen || requestId !== sensorRequestId) return;
-      stopSensor();
-      showSensorNotice(
-        window.isSecureContext === false
-          ? "浏览器未开放传感器 · 请使用 HTTPS，或用手指画圈"
-          : "未检测到手机传感器 · 可用鼠标或手指画圈",
-        5000,
-      );
-    }, 3000);
-    ensureCicadaAudio();
-    updateSensorButton();
-    cicadaStatus.textContent = "晃动或转动手机，竹知了随之回旋";
+    if (state.page === "cicada") attachSensorListeners();
   }
 
   function updateCicadaStatus() {
+    const now = performance.now();
     const turns = Math.abs(toySpeed) / TAU;
     const level = Math.min(5, Math.max(0, Math.floor(turns * 1.65)));
     $$("#speedBars i").forEach((bar, index) => bar.classList.toggle("on", index < level));
@@ -581,14 +587,16 @@ export async function initClassics() {
       return;
     }
     sensorNotice = "";
-    cicadaStatus.textContent = sensorCicada
-      ? sensorSource === "orientation"
-        ? "转动手机，竹知了随之回旋"
-        : "晃动或转动手机，竹知了随之回旋"
-      : autoCicada
-        ? "自动高速回旋 · 自动模式不计数"
+    const sensorDriving = !autoCicada && !dragging && sensorLastAt > 0
+      && (now - sensorLastAt < SENSOR_STALE_MS || sensorSpeed >= 0.25 || Math.abs(toySpeed) >= 0.25);
+    cicadaStatus.textContent = autoCicada
+      ? "自动高速回旋 · 自动模式不计数"
+      : sensorDriving
+        ? sensorSource === "orientation"
+          ? "转动手机 · 竹声随之回旋"
+          : "手机一晃 · 竹声回旋"
       : turns < 0.55
-        ? "按住画圈，越快越响"
+        ? "按住画圈，手机晃动也能直接转"
         : turns < 1.5
           ? "竹声初起 · 再快一些"
           : turns < 2.8
@@ -597,8 +605,10 @@ export async function initClassics() {
   }
 
   function setAuto(enabled) {
-    if (enabled && sensorCicada) stopSensor();
-    if (enabled) ensureCicadaAudio();
+    if (enabled) {
+      resetSensorMotion();
+      ensureCicadaAudio();
+    }
     autoCicada = enabled;
     autoButton.classList.toggle("active", enabled);
     autoButton.textContent = enabled ? "停止自动" : "自动甩";
@@ -722,29 +732,47 @@ export async function initClassics() {
   function cicadaLoop(now) {
     const elapsed = Math.min(0.04, (now - lastFrame) / 1000 || 0.016);
     lastFrame = now;
+    let sensorDriving = false;
     if (autoCicada) {
       toySpeed += (AUTO_SPEED - toySpeed) * Math.min(1, elapsed * 4);
-    } else if (sensorCicada) {
-      const sensorFresh = sensorLastAt && now - sensorLastAt < 360;
-      const target = sensorFresh ? sensorSpeed : 0;
-      toySpeed += (target - toySpeed) * Math.min(1, elapsed * 9);
-      if (!sensorFresh) sensorSpeed *= Math.pow(0.8, elapsed * 60);
+    } else if (dragging) {
+      // Pointer movement updates the angle directly; the sensor remains armed
+      // but must not fight the user's hand while dragging.
+    } else if (sensorLastAt) {
+      const sensorFresh = now - sensorLastAt < SENSOR_STALE_MS;
+      if (sensorFresh) {
+        toySpeed += (sensorSpeed - toySpeed) * Math.min(1, elapsed * 5);
+      } else {
+        sensorSpeed *= Math.pow(0.92, elapsed * 60);
+        toySpeed *= Math.pow(0.92, elapsed * 60);
+      }
+      sensorDriving = sensorFresh || sensorSpeed >= 0.25 || Math.abs(toySpeed) >= 0.25;
+      if (!sensorFresh && sensorSpeed < 0.25 && Math.abs(toySpeed) < 0.25) {
+        toySpeed = 0;
+        resetSensorMotion();
+        sensorDriving = false;
+      }
     } else if (!dragging) {
       toySpeed *= Math.pow(0.9, elapsed * 60);
     }
-    if (autoCicada || sensorCicada) {
+    if (autoCicada || sensorDriving) {
       const delta = toySpeed * elapsed;
       toyAngle += delta;
-      if (sensorCicada) countWaa(delta);
+      if (sensorDriving) {
+        if (Math.abs(toySpeed) / TAU >= 0.3) countWaa(delta);
+        else manualArc = 0;
+      }
     }
     drawCicada();
 
     const turns = Math.abs(toySpeed) / TAU;
-    const audible = state.page === "cicada" && turns > 0.5;
+    const audible = state.page === "cicada" && turns > 0.12;
     if (cicadaGain && audioContext) {
       const nowAudio = audioContext.currentTime;
-      const target = audible ? Math.min(0.18, (turns - 0.5) * 0.075) : 0.0001;
-      cicadaGain.gain.setTargetAtTime(target, nowAudio, 0.06);
+      const target = audible
+        ? Math.min(sensorDriving ? 0.3 : 0.26, (sensorDriving ? 0.045 : 0.025) + (turns - 0.12) * 0.11)
+        : 0.0001;
+      cicadaGain.gain.setTargetAtTime(target, nowAudio, 0.045);
       cicadaOscillator.frequency.setTargetAtTime(64 + Math.min(110, turns * 24), nowAudio, 0.05);
       cicadaFilter.frequency.setTargetAtTime(
         850 + Math.sin(toyAngle) * 320 + Math.min(850, turns * 180),
@@ -795,9 +823,12 @@ export async function initClassics() {
 
   fish.addEventListener("click", actFish);
   incense.addEventListener("click", actIncense);
+  const requestSensorFromGesture = () => { void armSensorFromGesture(); };
+  cicadaEntry?.addEventListener("pointerdown", requestSensorFromGesture);
+  cicadaEntry?.addEventListener("touchstart", requestSensorFromGesture, { passive: true });
   toy.addEventListener("pointerdown", (event) => {
     setAuto(false);
-    if (sensorCicada) stopSensor();
+    resetSensorMotion();
     ensureCicadaAudio();
     dragging = true;
     pointerId = event.pointerId;
@@ -810,7 +841,6 @@ export async function initClassics() {
   toy.addEventListener("pointerup", releaseToy);
   toy.addEventListener("pointercancel", releaseToy);
   autoButton.addEventListener("click", toggleAuto);
-  sensorButton?.addEventListener("click", () => void toggleSensor());
 
   document.addEventListener("keydown", (event) => {
     if (
@@ -827,25 +857,37 @@ export async function initClassics() {
     state.page = event.detail?.page || "home";
     if (state.page !== "cicada") {
       setAuto(false);
-      stopSensor();
+      resetSensorMotion();
+      detachSensorListeners();
       muteCicada();
       if (dragging) releaseToy();
-    } else if (sensorControlRelevant() && window.isSecureContext === false) {
-      showSensorNotice("手机晃动控制需要通过 HTTPS 打开", 5000);
+    } else {
+      // Navigation is itself normally a user gesture, so prime Web Audio now.
+      // iOS sensor permission is still requested on the first touch in-page.
+      ensureCicadaAudio();
+      if (sensorPermission === "granted") attachSensorListeners();
+      else armSensorWithoutPrompt();
+      if (sensorControlRelevant() && window.isSecureContext === false) {
+        showSensorNotice("手机晃动控制需要通过 HTTPS 打开", 5000);
+      }
     }
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      stopSensor();
+      resetSensorMotion();
+      detachSensorListeners();
+      muteCicada();
       beaconFish();
       beaconCicada();
+    } else if (state.page === "cicada") {
+      if (sensorPermission === "granted") attachSensorListeners();
+      else armSensorWithoutPrompt();
     }
   });
   window.addEventListener("pagehide", saveBeforeClose);
   window.addEventListener("beforeunload", saveBeforeClose);
 
   resumeBurn();
-  updateSensorButton();
   drawCicada();
   window.requestAnimationFrame(cicadaLoop);
   await Promise.all([loadFish(), loadIncense(), loadCicada()]);

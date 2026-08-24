@@ -3,6 +3,12 @@ import { $, api, playChime, pop } from './shared.js';
 const BEAD_COUNT = 27;
 const MANTRA_ROUND = 108;
 const TAU = Math.PI * 2;
+const BEAD_STEP = TAU / BEAD_COUNT;
+const TOUCH_INNER_RADIUS = 0.42;
+// Pointer capture lets the finger travel beyond the visible bead ring. Keep
+// the band wide enough for a relaxed outer loop while still excluding the
+// distant page background.
+const TOUCH_OUTER_RADIUS = 4;
 
 let initialized = false;
 
@@ -43,7 +49,8 @@ export function initMala() {
   let retryTimer = 0;
   let pointerDown = false;
   let pointerId = null;
-  let lastPointerBead = -1;
+  let lastPointerAngle = null;
+  let pointerArc = 0;
   let haloUntil = 0;
   let haloFrame = 0;
 
@@ -65,7 +72,7 @@ export function initMala() {
     } else if (count > 0 && count % MANTRA_ROUND === 0) {
       statusElement.textContent = `一百零八念 · 已圆满 ${count / MANTRA_ROUND} 次`;
     } else {
-      statusElement.textContent = '点击念珠，或按住沿圆环逐颗拨动';
+      statusElement.textContent = '点击念珠，或按住沿宽松环带逐颗拨动';
     }
   }
 
@@ -242,24 +249,38 @@ export function initMala() {
     };
   }
 
-  function beadAt(point) {
-    let nearest = -1;
-    let nearestDistance = 31;
-    beads.forEach((bead, index) => {
-      const distance = Math.hypot(point.x - bead.x, point.y - bead.y);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearest = index;
-      }
-    });
-    return nearest;
+  function ringPoint(point) {
+    const normalizedX = (point.x - centerX) / radiusX;
+    const normalizedY = (point.y - centerY) / radiusY;
+    return {
+      angle: Math.atan2(normalizedY, normalizedX),
+      radius: Math.hypot(normalizedX, normalizedY),
+    };
+  }
+
+  function isTouchPoint(point) {
+    const { radius } = ringPoint(point);
+    return radius >= TOUCH_INNER_RADIUS && radius <= TOUCH_OUTER_RADIUS;
+  }
+
+  function ringAngle(point) {
+    return ringPoint(point).angle;
+  }
+
+  function shortestAngleDelta(next, previous) {
+    let delta = next - previous;
+    while (delta > Math.PI) delta -= TAU;
+    while (delta < -Math.PI) delta += TAU;
+    return delta;
   }
 
   canvas.addEventListener('pointerdown', (event) => {
     if (event.button !== undefined && event.button !== 0) return;
     pointerDown = true;
     pointerId = event.pointerId;
-    lastPointerBead = beadAt(canvasPoint(event));
+    const point = canvasPoint(event);
+    lastPointerAngle = isTouchPoint(point) ? ringAngle(point) : null;
+    pointerArc = 0;
     canvas.setPointerCapture?.(event.pointerId);
     advance();
     event.preventDefault();
@@ -267,13 +288,35 @@ export function initMala() {
 
   canvas.addEventListener('pointermove', (event) => {
     if (!pointerDown || event.pointerId !== pointerId) return;
-    const bead = beadAt(canvasPoint(event));
-    if (bead < 0 || bead === lastPointerBead) return;
-    const distance = lastPointerBead < 0
-      ? 1
-      : Math.min((bead - lastPointerBead + BEAD_COUNT) % BEAD_COUNT, (lastPointerBead - bead + BEAD_COUNT) % BEAD_COUNT);
-    if (distance === 1) advance();
-    lastPointerBead = bead;
+    const point = canvasPoint(event);
+    if (!isTouchPoint(point)) {
+      // Crossing the central text or leaving the generous outer ring should
+      // not create a large angular jump when the pointer re-enters.
+      lastPointerAngle = null;
+      pointerArc = 0;
+      event.preventDefault();
+      return;
+    }
+    const angle = ringAngle(point);
+    if (lastPointerAngle === null) {
+      lastPointerAngle = angle;
+      event.preventDefault();
+      return;
+    }
+    const delta = shortestAngleDelta(angle, lastPointerAngle);
+    lastPointerAngle = angle;
+    // Pointer events can skip several beads on a fast outer loop; accumulate
+    // angular travel and consume every crossed bead instead of requiring one
+    // event per bead.
+    if (Math.abs(delta) <= Math.PI * 0.75) {
+      pointerArc += delta;
+      while (Math.abs(pointerArc) >= BEAD_STEP) {
+        advance();
+        pointerArc -= Math.sign(pointerArc) * BEAD_STEP;
+      }
+    } else {
+      pointerArc = 0;
+    }
     event.preventDefault();
   });
 
@@ -281,7 +324,8 @@ export function initMala() {
     if (event.pointerId !== pointerId) return;
     pointerDown = false;
     pointerId = null;
-    lastPointerBead = -1;
+    lastPointerAngle = null;
+    pointerArc = 0;
   }
 
   canvas.addEventListener('pointerup', releasePointer);
